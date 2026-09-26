@@ -1,0 +1,1320 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Рабочее время">
+<link rel="manifest" href="./manifest.json">
+<!-- v34: производственный календарь РФ + праздничная прибавка -->
+<title>Рабочее время</title>
+<style>
+:root{--bg:#06111b;--bg2:#02080e;--card:#0b1c2a;--card2:#102638;--line:#203b50;--text:#f7fafc;--muted:#91a6b7;--red:#ff1725;--green:#16d98a;--blue:#378cff;--orange:#ff9d42;--shadow:0 14px 34px #0005}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg2);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+body.light{--bg:#eef3f7;--bg2:#dfe7ed;--card:#fff;--card2:#f4f7fa;--line:#d8e2e9;--text:#10202c;--muted:#667b8b;--shadow:0 10px 28px #18344b18}
+.app{max-width:520px;margin:auto;min-height:100vh;background:linear-gradient(180deg,var(--bg),var(--bg2));padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+header{padding:calc(env(safe-area-inset-top) + 12px) 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:15;background:color-mix(in srgb,var(--bg) 91%,transparent);backdrop-filter:blur(18px)}
+h1{font-size:27px;margin:0}.sub{color:var(--muted);font-size:13px;margin-top:3px}.gear{border:0;background:var(--card2);color:var(--text);width:38px;height:38px;border-radius:50%;font-size:18px}
+main{padding:0 14px 20px}.view{display:none}.view.active{display:block}
+.hero{width:100%;aspect-ratio:1071/732;height:auto;border-radius:22px;overflow:hidden;position:relative;border:1px solid var(--line);background:url("home-day.jpg") center/cover no-repeat;background-color:#07121c;box-shadow:var(--shadow)}
+.hero:before{content:none}
+.hero:after{content:none}
+.heroText{position:absolute;right:15px;top:15px;text-align:right;font-weight:800;font-size:13px;line-height:1.25;z-index:2}.heroRail{position:absolute;left:0;right:0;bottom:15px;height:2px;background:#b9c5cd55}
+.month{display:flex;justify-content:space-between;align-items:center;margin:13px 2px}.month button{border:0;background:none;color:var(--muted);font-size:25px}.month b{font-size:15px}
+.card{background:linear-gradient(145deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:17px;padding:13px;margin-bottom:10px;box-shadow:var(--shadow)}
+.metrics3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.metric{background:color-mix(in srgb,var(--card) 78%,transparent);border:1px solid var(--line);border-radius:13px;padding:10px;min-width:0}.metric .k{font-size:10px;color:var(--muted);min-height:25px}.metric .v{font-size:16px;font-weight:800;margin-top:3px;white-space:nowrap}.metric .ico{font-size:20px;margin-bottom:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.progress{height:6px;background:#183044;border-radius:99px;overflow:hidden;margin-top:10px}.progress i{height:100%;display:block;background:var(--green);border-radius:99px}
+.row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.row .icon{width:32px;height:32px;border-radius:9px;background:var(--card2);display:grid;place-items:center}.grow{flex:1}.label{font-size:12px}.value{font-size:13px;font-weight:800}.muted{color:var(--muted)}
+.btn{width:100%;border:0;border-radius:13px;background:var(--red);color:white;font-size:14px;font-weight:800;padding:14px}.btn.ghost{background:var(--card2);border:1px solid var(--line);color:var(--text)}.btn.danger{background:#a81622}.btn + .btn{margin-top:8px}
+.title{font-size:21px;font-weight:800;margin:13px 2px}.route{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px;margin-bottom:9px}.routeTop{display:flex;justify-content:space-between;gap:8px}.route h3{font-size:14px;margin:0}.route p{font-size:11px;color:var(--muted);margin:6px 0}.tag{font-size:10px;padding:5px 7px;border-radius:99px;background:#103d2e;color:#54e6a6;white-space:nowrap}.tag.draft{background:#3a2d13;color:#ffd36a}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);display:grid;grid-template-columns:repeat(5,1fr);z-index:20;background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding:7px 5px calc(7px + env(safe-area-inset-bottom))}
+nav button{border:0;background:none;color:#8094a5;font-size:9px;padding:4px 0}nav b{display:block;font-size:19px;margin-bottom:2px}nav button.active{color:var(--red)}
+.modal{position:fixed;inset:0;background:#000a;z-index:40;display:none;align-items:flex-end}.modal.show{display:flex}.sheet{width:min(520px,100%);max-height:92vh;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:24px 24px 0 0;padding:18px 15px calc(24px + env(safe-area-inset-bottom))}
+.sheetHead{display:flex;justify-content:space-between;align-items:center}.sheet h2{font-size:20px;margin:0}.close{width:34px;height:34px;border:0;border-radius:50%;background:var(--card2);color:var(--text);font-size:18px}
+.groupTitle{font-size:13px;font-weight:800;margin:18px 0 7px;padding:8px 10px;border-radius:10px;background:var(--card2)}label{display:block;font-size:11px;color:var(--muted);margin:9px 0 5px}
+input,select{width:100%;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:11px;padding:12px;font-size:14px;outline:none}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.calc{font-size:12px;padding:9px 10px;border-radius:10px;background:var(--card2);margin-top:7px}.calc b{float:right}
+.calHead,.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.calHead{font-size:11px;text-align:center;color:var(--muted);margin:10px 0 7px}.day{height:48px;border:1px solid var(--line);border-radius:13px;background:var(--card);padding:7px;font-size:12px;position:relative;transition:.15s}.day.today{outline:2px solid var(--red);outline-offset:1px}.day.holiday{border:2px solid var(--red);background:color-mix(in srgb,var(--red) 10%,var(--card));font-weight:850}.day.holiday:before{content:"★";position:absolute;right:5px;top:4px;color:var(--red);font-size:9px}.day.routeDay:after,.day.sick:after,.day.unpaid:after,.day.off:after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;bottom:5px;left:50%;transform:translateX(-50%);background:var(--green)}.day.sick:after{background:var(--red)}.day.unpaid:after{background:var(--orange)}.day.off:after{background:var(--blue)}.holidayInfo{margin-top:14px;padding:13px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}.holidayInfoTitle{font-size:15px;font-weight:850;margin-bottom:8px}.holidayInfoItem{font-size:14px;line-height:1.35;color:var(--text);padding:5px 0;border-top:1px solid color-mix(in srgb,var(--line) 65%,transparent)}.holidayInfoItem:first-of-type{border-top:0}.holidayInfoEmpty{font-size:13px;color:var(--muted)}
+.setting{padding:12px 0;border-bottom:1px solid var(--line)}.setting:last-child{border:0}.radioRow{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:99px;padding:9px 12px;font-size:12px}.chip.on{background:var(--red);border-color:var(--red);color:white}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translate(-50%,-100px);background:#163047;color:white;border:1px solid #36576d;border-radius:13px;padding:10px 14px;z-index:70;font-size:12px;transition:.25s}.toast.show{transform:translate(-50%,0)}
+.note{font-size:10px;color:var(--muted);line-height:1.4}.empty{text-align:center;color:var(--muted);padding:28px 10px}
+@media(max-width:370px){.metric .v{font-size:14px}.metrics3{gap:5px}}
+.legCountBox{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:9px 10px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
+.legCountLabel{font-size:12px;font-weight:800;color:var(--muted)}
+.legCountSwitch{display:flex;gap:5px}.legCountSwitch button{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:9px;padding:6px 9px;font-size:12px;font-weight:800}.legCountSwitch button.on{background:var(--red);border-color:var(--red);color:#fff}
+</style>
+
+<style id="readability-v9">
+:root{
+  --ui-title:clamp(30px,8.2vw,42px);
+  --ui-section:21px;
+  --ui-body:17px;
+  --ui-small:15px;
+  --ui-value:20px;
+}
+
+/* Общая типографика */
+body{font-size:var(--ui-body);line-height:1.32}
+.page h1,.screen h1,main h1{font-size:var(--ui-title)!important;line-height:1.04!important;letter-spacing:-.6px}
+h2{font-size:24px!important;line-height:1.12!important}
+h3,.sectionTitle,.cardTitle{font-size:var(--ui-section)!important;line-height:1.18!important}
+p,.note,label,.k{font-size:var(--ui-small)!important;line-height:1.32!important}
+.v,.value,strong,b{font-weight:750}
+
+/* Карточки: меньше пустого места, крупнее содержимое */
+.card,.metric,.route,.setting{padding:16px!important}
+.metric .k{font-size:15px!important}
+.metric .v{font-size:21px!important;line-height:1.1!important}
+.route{margin-bottom:12px!important}
+.route h3{font-size:21px!important;margin-bottom:7px!important}
+.route p{font-size:16px!important;line-height:1.38!important;margin:5px 0!important}
+.route .tag,.tag{font-size:14px!important;padding:6px 10px!important}
+
+/* Кнопки и нижняя навигация */
+.btn,button{font-size:17px!important;font-weight:750}
+nav button,.bottomNav button,.tabbar button{font-size:13px!important}
+nav button span,.bottomNav button span,.tabbar button span{font-size:13px!important}
+
+/* Формы маршрута/событий */
+input,select,textarea{
+  font-size:17px!important;
+  min-height:48px!important;
+}
+.formRow,.row{gap:10px}
+.modal h2,.sheet h2{font-size:28px!important;line-height:1.08!important}
+.modal label,.sheet label{font-size:15px!important}
+.calc,.result,.summary{font-size:17px!important}
+.calc b,.result b,.summary b{font-size:19px!important}
+
+/* Календарь: числа и отметки заметнее, без раздувания сетки */
+.calendar .dow,.weekdays>*{font-size:14px!important}
+.day{font-size:17px!important}
+.day.routeDay:after,.day.sick:after,.day.unpaid:after,.day.off:after{
+  width:15px!important;height:15px!important;
+}
+.legend,.calendarLegend{font-size:14px!important;line-height:1.4!important}
+
+/* Статистика и "Ещё" */
+.stats .card,.stats .metric{padding:15px!important}
+.stats .v{font-size:21px!important}
+.setting b{font-size:18px!important}
+.setting p{font-size:15px!important}
+
+/* На узких iPhone сохраняем две колонки, но не допускаем тесноты */
+@media(max-width:390px){
+  :root{--ui-body:16px;--ui-small:14px;--ui-section:20px}
+  .card,.metric,.route,.setting{padding:14px!important}
+  .route p{font-size:15px!important}
+  input,select,textarea{font-size:16px!important}
+}
+</style>
+
+
+<style id="v10-polish">
+/* Верх статистики: 3 значения больше не налезают друг на друга */
+#statsTop,.statsTop,.topStats{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+#statsTop .metric,.statsTop .metric,.topStats .metric{
+  min-width:0!important;padding:13px 10px!important;
+}
+#statsTop .v,.statsTop .v,.topStats .v{
+  font-size:clamp(16px,4.3vw,20px)!important;
+  white-space:nowrap!important;
+  letter-spacing:-.4px!important;
+}
+#statsTop .k,.statsTop .k,.topStats .k{font-size:14px!important;line-height:1.15!important}
+
+/* Редактор маршрута: крупно, но плотнее */
+.modal .card,.sheet .card{padding:13px!important}
+.modal .sectionTitle,.sheet .sectionTitle{padding:11px 13px!important}
+.modal .row,.sheet .row{gap:10px!important}
+.modal input,.sheet input{min-height:50px!important;font-weight:650}
+.modal .calc,.sheet .calc{padding:11px 13px!important;margin-top:8px!important}
+.modal-content,.sheet-content{padding-top:max(14px,env(safe-area-inset-top))!important}
+
+/* Понятные пиктограммы в заголовках редактора */
+.routeForm .sectionTitle:nth-of-type(1)::before{content:"🔗 ";font-size:20px}
+.routeForm .sectionTitle:nth-of-type(2)::before{content:"1️⃣ ";font-size:20px}
+.routeForm .sectionTitle:nth-of-type(3)::before{content:"🌙 ";font-size:20px}
+.routeForm .sectionTitle:nth-of-type(4)::before{content:"2️⃣ ";font-size:20px}
+
+/* Дата/время выглядят как нажимаемые iPhone-поля */
+input[type="datetime-local"]{
+  cursor:pointer!important;
+  -webkit-appearance:none;
+  appearance:none;
+  font-variant-numeric:tabular-nums;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{
+  opacity:1!important;
+  width:24px;height:24px;
+}
+
+/* компактная подсказка */
+.pickerHint{font-size:13px!important;opacity:.72;margin:5px 2px 0!important}
+
+@media(max-width:390px){
+ #statsTop,.statsTop,.topStats{gap:7px!important}
+ #statsTop .metric,.statsTop .metric,.topStats .metric{padding:11px 7px!important}
+ #statsTop .v,.statsTop .v,.topStats .v{font-size:16px!important}
+}
+</style>
+
+
+<style id="v11-exact-polish">
+/* ===== РЕДАКТОР МАРШРУТА ===== */
+#routeModal .modalBox,#routeModal .sheet,#routeModal .modal-content{
+  padding:16px!important;
+  padding-top:max(16px,env(safe-area-inset-top))!important;
+}
+#routeModal h2{font-size:30px!important;margin:0 54px 14px 0!important}
+#routeModal .sectionTitle{
+  position:relative;
+  font-size:19px!important;
+  font-weight:800!important;
+  padding:11px 13px!important;
+  border-radius:12px!important;
+  margin:10px 0!important;
+}
+#routeModal label{font-size:14px!important}
+#routeModal input{
+  font-size:17px!important;
+  min-height:48px!important;
+  padding:10px 12px!important;
+}
+#routeModal .calc{
+  border-radius:12px!important;
+  font-size:16px!important;
+  min-height:48px!important;
+}
+#routeModal .calc b{font-size:19px!important}
+
+/* Визуальные значки для смысловых блоков */
+#routeModal .sectionTitle:nth-of-type(1)::before{content:"🔗 ";margin-right:5px}
+#routeModal .sectionTitle:nth-of-type(2)::before{content:"🔴 1  ";margin-right:5px}
+#routeModal .sectionTitle:nth-of-type(3)::before{content:"🛏️ ";margin-right:5px}
+#routeModal .sectionTitle:nth-of-type(4)::before{content:"🔴 2  ";margin-right:5px}
+
+/* Отдых с оборота выделяем отдельно */
+#routeModal .sectionTitle:nth-of-type(3){
+  border:1px solid rgba(40,210,130,.45)!important;
+  background:rgba(15,100,70,.24)!important;
+}
+#routeModal .sectionTitle:nth-of-type(3)+.calc{
+  border:1px solid rgba(40,210,130,.35)!important;
+}
+
+/* Поля даты/времени: системный iPhone picker, без английской подсказки */
+#routeModal input[type="datetime-local"]{
+  font-size:16px!important;
+  text-align:center!important;
+  color:var(--text)!important;
+  -webkit-appearance:auto!important;
+  appearance:auto!important;
+}
+
+/* ===== СТАТИСТИКА =====
+   Вместо 3 тесных колонок — аккуратные крупные строки.
+*/
+#statsTop,.statsTop,.topStats{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+}
+#statsTop .metric,.statsTop .metric,.topStats .metric{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  min-height:62px!important;
+  padding:12px 16px!important;
+}
+#statsTop .k,.statsTop .k,.topStats .k{
+  font-size:16px!important;
+  line-height:1.15!important;
+  margin:0!important;
+}
+#statsTop .v,.statsTop .v,.topStats .v{
+  font-size:21px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  text-align:right!important;
+  margin:0!important;
+}
+
+/* Нижнее меню не раздуваем */
+nav button,.bottomNav button,.tabbar button{font-size:12px!important}
+</style>
+
+<style id="v12-real-layout">
+.routeSheet{padding:14px!important;padding-bottom:calc(26px + env(safe-area-inset-bottom))!important}
+.routeSheet .sheetHead{position:sticky;top:0;z-index:5;background:var(--bg);padding:5px 0 10px!important}
+.routeSheet .sheetHead h2{font-size:27px!important;margin:0!important}
+.routeBlock{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px;margin:9px 0}
+.routeBlockHead{display:flex;align-items:center;gap:9px;font-size:18px;margin-bottom:10px}
+.routeIcon{font-size:20px}.legBadge{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border-radius:50%;background:#e63737;color:white;font-weight:900}
+.routeSheet label{font-size:13px!important;margin-bottom:5px!important}
+.routeSheet input{min-height:46px!important;font-size:16px!important;padding:9px 10px!important}
+.routeTotals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.routeTotal{padding:10px;border-radius:12px;background:rgba(255,255,255,.045);display:flex;flex-direction:column;gap:5px}
+.routeTotal span{font-size:14px}.routeTotal small{font-size:13px}.routeTotal b{font-size:17px}
+.turnRest{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(29,180,105,.12);border:1px solid rgba(42,211,129,.35);border-radius:16px;padding:13px;margin:9px 0}
+.turnRest>div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center}.turnRest small{grid-column:2;font-size:12px;opacity:.7;margin-top:2px}.turnRest>b{font-size:19px;color:#43db91;white-space:nowrap}
+.routeSummary{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:13px;margin:10px 0}
+.routeSummary>div:not(.routeBlockHead){display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);font-size:15px}.routeSummary>div b{white-space:nowrap}
+.saveRouteBtn{font-weight:800!important}
+.statsSummary{padding:4px 14px!important}.statsSummaryRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 2px;border-bottom:1px solid rgba(255,255,255,.07);font-size:17px}.statsSummaryRow:last-child{border-bottom:0}.statsSummaryRow b{font-size:21px;white-space:nowrap}
+@media(max-width:390px){.routeTotals{grid-template-columns:1fr}.statsSummaryRow b{font-size:19px}}
+</style>
+
+<style id="v13-compact-wheel">
+/* Компактный редактор */
+.routeSheet{padding:10px 12px calc(18px + env(safe-area-inset-bottom))!important}
+.routeSheet .sheetHead{padding:2px 0 7px!important}
+.routeSheet .sheetHead h2{font-size:25px!important}
+.routeBlock{padding:9px!important;margin:7px 0!important;border-radius:14px!important}
+.routeBlockHead{font-size:16px!important;margin-bottom:7px!important;gap:7px!important}
+.legBadge{width:24px!important;height:24px!important;font-size:14px!important}
+.routeSheet .twocol{gap:8px!important}
+.routeSheet label{font-size:12px!important;margin:0 0 4px!important;line-height:1.15!important}
+.routeSheet input:not([type=hidden]){min-height:42px!important}
+.routeTotals{gap:7px!important;margin-top:7px!important}
+.routeTotal{padding:8px 9px!important;gap:3px!important}
+.routeTotal span,.routeTotal small{font-size:12px!important}.routeTotal b{font-size:16px!important}
+.turnRest{padding:9px 11px!important;margin:7px 0!important;border-radius:14px!important}
+.turnRest small{font-size:11px!important}.turnRest>b{font-size:17px!important}
+.routeSummary{padding:9px 11px!important;margin:7px 0!important;border-radius:14px!important}
+.routeSummary>div:not(.routeBlockHead){padding:5px 0!important;font-size:13px!important}
+.routeSheet .note{font-size:11px!important;margin:6px 2px!important}
+.routeSheet .btn{min-height:45px!important;margin-top:6px!important}
+
+/* Короткое русское отображение даты и времени */
+.dtPick{width:100%;min-width:0;height:45px;border:1px solid rgba(120,180,220,.28);border-radius:11px;background:rgba(10,40,57,.78);color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:7px;padding:0 10px;font:inherit}
+.dtPick .dtDate{font-size:14px;font-weight:700;white-space:nowrap}.dtPick .dtTime{font-size:17px;font-weight:900;white-space:nowrap}
+.dtPick.empty .dtDate{opacity:.55}.dtPick.empty .dtTime{opacity:.55}
+
+/* Колёсики iPhone-style */
+.wheelOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.56);align-items:flex-end}
+.wheelOverlay.open{display:flex}
+.wheelSheet{width:100%;background:#101c25;border-radius:22px 22px 0 0;padding-bottom:max(14px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(0,0,0,.4)}
+.wheelHead{height:55px;display:grid;grid-template-columns:82px 1fr 82px;align-items:center;border-bottom:1px solid rgba(255,255,255,.08);padding:0 8px}
+.wheelHead b{text-align:center;font-size:17px}.wheelHead button{border:0;background:none;color:#9db0bf;font-size:15px;padding:10px 4px}.wheelHead .wheelDone{color:#ff3948;font-weight:800}
+.wheelLabels{display:grid;grid-template-columns:1fr 1.25fr 1.2fr .9fr .9fr;text-align:center;color:#8195a5;font-size:11px;padding:8px 10px 2px}
+.wheelBody{height:210px;position:relative;display:grid;grid-template-columns:1fr 1.25fr 1.2fr .9fr .9fr;padding:0 10px;overflow:hidden}
+.wheelCol{height:210px;overflow-y:auto;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:78px 0}
+.wheelCol::-webkit-scrollbar{display:none}.wheelItem{height:54px;display:flex;align-items:center;justify-content:center;scroll-snap-align:center;font-size:19px;font-weight:700;position:relative;z-index:2}
+.wheelFocus{position:absolute;left:10px;right:10px;top:78px;height:54px;border-top:1px solid rgba(255,255,255,.13);border-bottom:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.045);border-radius:10px;pointer-events:none}
+@media(max-width:380px){.dtPick{padding:0 7px}.dtPick .dtDate{font-size:13px}.dtPick .dtTime{font-size:16px}.routeSheet .twocol{gap:6px}}
+</style>
+
+
+<style id="v14-home-metrics-fix">
+#home .metrics3 .metric{padding:8px 6px!important}
+#home .metrics3 .metric .ico{font-size:17px!important;margin-bottom:3px!important}
+#home .metrics3 .metric .k{
+  font-size:10px!important;
+  line-height:1.08!important;
+  min-height:22px!important;
+}
+#home .metrics3 .metric .v{
+  font-size:13px!important;
+  line-height:1.05!important;
+  letter-spacing:-.25px!important;
+  white-space:nowrap!important;
+  margin-top:2px!important;
+}
+@media(max-width:390px){
+ #home .metrics3{gap:5px!important}
+ #home .metrics3 .metric{padding:7px 4px!important}
+ #home .metrics3 .metric .v{font-size:12px!important;letter-spacing:-.4px!important}
+}
+</style>
+
+<style id="v16-light-date-fix">
+body.light .dtPick,html.light .dtPick,[data-theme="light"] .dtPick{background:#eef4f7!important;border-color:#b8c8d1!important;color:#07141d!important}
+body.light .dtPick .dtDate,body.light .dtPick .dtTime,html.light .dtPick .dtDate,html.light .dtPick .dtTime,[data-theme="light"] .dtPick .dtDate,[data-theme="light"] .dtPick .dtTime{color:#07141d!important;opacity:1!important}
+body.light .dtPick.empty .dtDate,body.light .dtPick.empty .dtTime,html.light .dtPick.empty .dtDate,html.light .dtPick.empty .dtTime,[data-theme="light"] .dtPick.empty .dtDate,[data-theme="light"] .dtPick.empty .dtTime{color:#667984!important;opacity:1!important}
+body.light .wheelSheet,html.light .wheelSheet,[data-theme="light"] .wheelSheet{background:#101c25!important;color:#f4f7f9!important}
+body.light .wheelItem,html.light .wheelItem,[data-theme="light"] .wheelItem{color:#f4f7f9!important}
+body.light .wheelLabels,html.light .wheelLabels,[data-theme="light"] .wheelLabels{color:#9db0bf!important}
+body.light .wheelHead b,html.light .wheelHead b,[data-theme="light"] .wheelHead b{color:#f4f7f9!important}
+</style>
+<style id="v17-swipe-route">
+.swipeRoute{position:relative;overflow:hidden;border-radius:18px;margin-bottom:10px;touch-action:pan-y}
+.swipeRoute .route{margin:0!important;position:relative;z-index:2;transition:transform .2s ease;will-change:transform}
+.swipeDelete{position:absolute;z-index:1;right:0;top:0;bottom:0;width:104px;border:0;background:#e52f38;color:#fff;font-weight:800;font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.swipeDelete span{font-size:13px}
+.swipeRoute.open .swipeRouteCard{transform:translateX(-104px)}
+</style>
+
+<style id="v26-passenger-style">
+.passengerBox{margin-top:8px;padding:8px 10px;border:1px solid var(--line,#294154);border-radius:13px;background:rgba(80,160,210,.06)}
+.passengerToggle{display:inline-flex!important;align-items:center;gap:7px;font-size:14px!important;font-weight:800!important;cursor:pointer;width:auto!important}
+.passengerToggle input{width:18px!important;height:18px!important;min-height:18px!important;margin:0;accent-color:#19c987}
+.passengerFields{margin-top:9px}
+.passengerTotal{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;font-size:15px}
+.passengerTotal b{font-size:17px;white-space:nowrap}
+body.light .passengerBox{background:rgba(40,120,170,.05)}
+.routeHeadActions{display:flex;align-items:center;gap:8px}.routeQuickSave{border:0;background:var(--green);color:#04130d;width:38px;height:38px;border-radius:50%;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center}
+</style>
+
+<style id="v35-install-gate-style">
+#installGate{position:fixed;inset:0;z-index:999999;background:#0b0d10;color:#fff;display:none;align-items:center;justify-content:center;padding:24px}
+#installGate.show{display:flex}#installGate .installCard{width:min(420px,100%);background:#171a20;border:1px solid #2b3038;border-radius:22px;padding:22px;text-align:center}
+#installGate h2{margin:0 0 10px;font-size:22px}#installGate p{margin:8px 0;color:#aeb4bf;line-height:1.45}
+#installGate .steps{margin-top:16px;text-align:left;background:#11151a;border-radius:14px;padding:12px 14px}#installGate .steps b{color:#fff}
+</style>
+<style id="compact-v35-7">
+/* Компактный интерфейс: только размеры/отступы, логика приложения не изменена */
+.app{padding-bottom:calc(68px + env(safe-area-inset-bottom))!important}
+header{padding:calc(env(safe-area-inset-top) + 7px) 12px 6px!important}
+header h1,h1{font-size:23px!important;line-height:1.05!important}
+.sub{font-size:11px!important;margin-top:1px!important}
+.gear{width:34px!important;height:34px!important;font-size:16px!important}
+main{padding:0 10px 14px!important}
+.hero{height:178px!important;aspect-ratio:auto!important;border-radius:16px!important}
+.heroText{right:11px!important;top:10px!important;font-size:11px!important}
+.month{margin:8px 2px!important}.month button{font-size:21px!important}.month b{font-size:14px!important}
+.card,.metric,.setting{padding:10px!important;border-radius:13px!important;margin-bottom:7px!important}
+.metrics3{gap:5px!important}.metric{padding:8px!important}.metric .ico{font-size:17px!important;margin-bottom:2px!important}.metric .k{font-size:11px!important;min-height:0!important;line-height:1.15!important}.metric .v{font-size:17px!important;margin-top:3px!important}
+.grid2{gap:6px!important}.row{gap:8px!important;padding:7px 0!important}.row .icon{width:28px!important;height:28px!important;border-radius:8px!important}.label{font-size:11px!important}.value{font-size:13px!important}
+.title{font-size:19px!important;margin:9px 2px!important}
+.route{padding:10px!important;margin-bottom:7px!important;border-radius:13px!important}.route h3{font-size:17px!important;margin-bottom:3px!important}.route p{font-size:13px!important;line-height:1.25!important;margin:3px 0!important}.route .tag,.tag{font-size:11px!important;padding:4px 7px!important}
+.btn{font-size:14px!important;padding:11px!important;border-radius:11px!important;min-height:40px!important}.btn+.btn{margin-top:6px!important}
+nav{padding:4px 4px calc(4px + env(safe-area-inset-bottom))!important}nav button{font-size:10px!important;padding:2px 0!important}nav b{font-size:17px!important;margin-bottom:1px!important}
+.sheet{max-height:94vh!important;border-radius:19px 19px 0 0!important;padding:12px 11px calc(16px + env(safe-area-inset-bottom))!important}.sheet h2,.modal h2{font-size:22px!important}.close{width:32px!important;height:32px!important;font-size:16px!important}.groupTitle{font-size:12px!important;margin:11px 0 5px!important;padding:6px 8px!important}.sheet label,.modal label,label{font-size:12px!important;margin:6px 0 3px!important}
+input,select,textarea{font-size:15px!important;min-height:40px!important;padding:8px 9px!important;border-radius:9px!important}.twocol{gap:6px!important}.calc,.result,.summary{font-size:13px!important;padding:7px 8px!important;margin-top:5px!important}.calc b,.result b,.summary b{font-size:14px!important}
+.legCountBox{padding:6px 8px!important;margin-bottom:7px!important;border-radius:11px!important}.legCountLabel{font-size:11px!important}.legCountSwitch{gap:4px!important}.legCountSwitch button{padding:4px 7px!important;font-size:11px!important;border-radius:8px!important;min-height:30px!important}
+.routeSheet{padding:7px 9px calc(14px + env(safe-area-inset-bottom))!important}.routeSheet .sheetHead{padding:1px 0 5px!important}.routeSheet .sheetHead h2{font-size:21px!important}.routeHeadActions{gap:6px!important}.routeQuickSave{width:33px!important;height:33px!important;font-size:17px!important}.routeBlock{padding:7px!important;margin:5px 0!important;border-radius:12px!important}.routeBlockHead{font-size:14px!important;margin-bottom:5px!important;gap:5px!important}.routeIcon{font-size:17px!important}.legBadge{width:23px!important;height:23px!important;font-size:12px!important}.routeSheet label{font-size:11px!important;margin:0 0 3px!important}.routeSheet input:not([type=hidden]){min-height:38px!important;font-size:14px!important;padding:6px 8px!important}.routeTotals{gap:5px!important;margin-top:5px!important}.routeTotal{padding:6px 7px!important;gap:2px!important;border-radius:10px!important}.routeTotal span,.routeTotal small{font-size:11px!important}.routeTotal b{font-size:14px!important}.routeSummary{padding:7px 8px!important;margin:5px 0!important;border-radius:11px!important}.routeSummary>div:not(.routeBlockHead){padding:4px 0!important;font-size:12px!important}.routeSheet .note{font-size:10px!important;margin:4px 1px!important}.routeSheet .btn{min-height:40px!important;margin-top:4px!important}
+.calHead,.cal{gap:4px!important}.calHead{font-size:10px!important;margin:7px 0 5px!important}.day{height:42px!important;border-radius:10px!important;padding:5px!important;font-size:14px!important}.day.holiday:before{right:4px!important;top:3px!important;font-size:8px!important}.day.routeDay:after,.day.sick:after,.day.unpaid:after,.day.off:after{width:10px!important;height:10px!important;bottom:4px!important}.holidayInfo{margin-top:9px!important;padding:9px 10px!important;border-radius:11px!important}.holidayInfoTitle{font-size:13px!important;margin-bottom:5px!important}.holidayInfoItem{font-size:12px!important;padding:4px 0!important}.holidayInfoEmpty{font-size:12px!important}
+.statsSummary{padding:2px 10px!important}.statsSummaryRow{padding:9px 1px!important;font-size:14px!important}.statsSummaryRow b{font-size:17px!important}.setting{padding:8px 0!important}.setting b{font-size:15px!important}.setting p{font-size:12px!important}.chip{padding:6px 9px!important;font-size:11px!important}
+@media(max-width:390px){.hero{height:160px!important}.metric .k{font-size:10px!important}.metric .v{font-size:16px!important}.route h3{font-size:16px!important}.route p{font-size:12px!important}}
+</style>
+
+<style id="v35-8-balanced-sizing">
+/* Точечная корректировка после v35.7:
+   1) крупнее нижнее меню;
+   2) крупнее три главных показателя.
+   Остальной компактный интерфейс не меняется. */
+
+/* Отработано / Норма за месяц / Норма на сегодня */
+#home .metrics3{gap:7px!important}
+#home .metrics3 .metric{
+  padding:11px 9px!important;
+  min-height:92px!important;
+}
+#home .metrics3 .metric .ico{
+  font-size:21px!important;
+  margin-bottom:3px!important;
+}
+#home .metrics3 .metric .k{
+  font-size:13px!important;
+  line-height:1.18!important;
+}
+#home .metrics3 .metric .v{
+  font-size:20px!important;
+  line-height:1.12!important;
+  margin-top:7px!important;
+  white-space:nowrap!important;
+}
+
+/* Нижняя навигация */
+.app{
+  padding-bottom:calc(82px + env(safe-area-inset-bottom))!important;
+}
+nav{
+  padding:7px 5px calc(8px + env(safe-area-inset-bottom))!important;
+  min-height:72px!important;
+}
+nav button{
+  font-size:12px!important;
+  padding:4px 0 3px!important;
+  line-height:1.15!important;
+}
+nav b{
+  font-size:21px!important;
+  margin-bottom:4px!important;
+  line-height:1!important;
+}
+</style>
+
+
+<style id="v35-9-compact-fix">
+/* v35.9 — исправление только двух мест */
+
+/* 1. Верхние три карточки:
+   чуть крупнее исходной v35.7, но без выхода текста за границы */
+#home .metrics3 .metric{
+  min-width:0!important;
+  min-height:88px!important;
+  padding:10px 7px!important;
+  overflow:hidden!important;
+}
+#home .metrics3 .metric .ico{
+  font-size:20px!important;
+  margin-bottom:2px!important;
+}
+#home .metrics3 .metric .k{
+  font-size:12.5px!important;
+  line-height:1.15!important;
+  overflow-wrap:normal!important;
+}
+#home .metrics3 .metric .v{
+  font-size:17px!important;
+  line-height:1.1!important;
+  margin-top:6px!important;
+  white-space:nowrap!important;
+  letter-spacing:-0.35px!important;
+}
+
+/* 2. Нижнее меню:
+   возвращаем компактную высоту v35.7, увеличиваем только значки */
+.app{
+  padding-bottom:calc(72px + env(safe-area-inset-bottom))!important;
+}
+nav{
+  padding:4px 5px calc(4px + env(safe-area-inset-bottom))!important;
+  min-height:unset!important;
+}
+nav button{
+  font-size:11px!important;
+  padding:3px 0 2px!important;
+  line-height:1.1!important;
+}
+nav b{
+  font-size:23px!important;
+  margin-bottom:3px!important;
+  line-height:1!important;
+}
+</style>
+
+
+<style id="v35-11-day-night-hero">
+/* Светлая тема = день, тёмная тема = ночь */
+.hero{background-image:url("home-night.jpg")!important}
+body.light .hero{background-image:url("home-day.jpg")!important}
+</style>
+
+</head>
+<body>
+<div id="installGate" aria-hidden="true"><div class="installCard">
+<h2>Установите «Рабочее время»</h2>
+<p id="installIntro">Для работы установите приложение на главный экран. Регистрация устройства произойдёт только после запуска с иконки.</p>
+<div class="steps" id="iosInstallSteps">
+<p><b>1.</b> Откройте эту ссылку в <b>Safari</b>.</p>
+<p><b>2.</b> Нажмите кнопку <b>«Поделиться»</b> ⎋.</p>
+<p><b>3.</b> Выберите <b>«На экран Домой»</b>.</p>
+<p><b>4.</b> Нажмите <b>«Добавить»</b>.</p>
+<p><b>5.</b> Закройте Safari и откройте <b>«Рабочее время»</b> с новой иконки.</p>
+</div>
+<div class="steps" id="androidInstallSteps" style="display:none">
+<p><b>1.</b> Откройте эту ссылку в <b>Chrome</b>.</p>
+<p><b>2.</b> Нажмите меню <b>⋮</b> в Chrome.</p>
+<p><b>3.</b> Выберите <b>«Установить приложение»</b> или <b>«Добавить на главный экран»</b>.</p>
+<p><b>4.</b> Подтвердите установку.</p>
+<p><b>5.</b> Откройте <b>«Рабочее время»</b> с созданной иконки.</p>
+</div>
+<p id="installHint" style="margin-top:14px;font-size:12px">После установки запускайте приложение с иконки на главном экране.</p>
+</div></div>
+<div class="app">
+<header><div><h1 id="pageTitle">Рабочее время</h1><div class="sub" id="todayLabel"></div></div><button class="gear" onclick="showView('settings',4)">⚙</button></header>
+<main>
+<section id="home" class="view active">
+<div class="hero"><div class="heroRail"></div></div>
+<div class="month"><button onclick="monthMove(-1)">‹</button><b class="monthName"></b><button onclick="monthMove(1)">›</button></div>
+<div class="card"><div class="metrics3">
+<div class="metric"><div class="ico">🕒</div><div class="k">Отработано</div><div class="v" id="worked">0 ч 00 мин</div></div>
+<div class="metric"><div class="ico">📊</div><div class="k">Норма за месяц</div><div class="v" id="norm">0 ч 00 мин</div></div>
+<div class="metric"><div class="ico">📅</div><div class="k">Норма на сегодня</div><div class="v" id="todayNorm">0 ч 00 мин</div></div>
+</div><div class="progress"><i id="bar" style="width:0"></i></div></div>
+<div class="grid2">
+<div class="metric"><div class="ico">🌙</div><div class="k">Ночные часы</div><div class="v" id="night">0 ч 00 мин</div></div>
+<div class="metric"><div class="ico">🎁</div><div class="k">Праздничные часы</div><div class="v" id="holidayHours">0 ч 00 мин</div></div>
+<div class="metric"><div class="ico">🏥</div><div class="k">Больничные</div><div class="v" id="sickDays">0 дней</div></div>
+<div class="metric"><div class="ico">📄</div><div class="k">Без содержания</div><div class="v" id="unpaidDays">0 дней</div></div>
+<div class="metric"><div class="ico">🏠</div><div class="k">Выходные</div><div class="v" id="offDays">0 дней</div></div>
+<div class="metric"><div class="ico">🚃</div><div class="k">Пассажиром</div><div class="v" id="passengerHours">0 ч 00 мин</div></div>
+</div>
+<div class="card" style="margin-top:9px"><div class="row"><div class="icon">🚆</div><div class="grow label">Количество поездок</div><div class="value" id="trips">0</div></div></div>
+<button class="btn" onclick="openRoute()">＋ Добавить маршрут</button>
+</section>
+
+<section id="routes" class="view"><button class="btn" onclick="openRoute()">＋ Добавить маршрут</button><div id="routeList" style="margin-top:10px"></div></section>
+
+<section id="calendar" class="view"><div class="card"><div class="month"><button onclick="monthMove(-1)">‹</button><b class="monthName"></b><button onclick="monthMove(1)">›</button></div><div class="calHead"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div><div class="cal" id="cal"></div><p class="note">🟢 рабочий маршрут · 🔴 больничный · 🟠 без содержания · 🔵 выходной · ★ праздничный день.</p><div class="holidayInfo" id="holidayInfo"></div></div><button class="btn ghost" onclick="openEvent()">＋ Добавить событие</button><div id="eventList" style="margin-top:10px"></div></section>
+
+<section id="stats" class="view"><div class="title">Статистика</div>
+<div class="card statsSummary">
+<div class="statsSummaryRow"><span>⏱️ Отработано</span><b id="sWorked">0</b></div>
+<div class="statsSummaryRow"><span>📊 Норма месяца</span><b id="sNorm">0</b></div>
+<div class="statsSummaryRow"><span>📅 Норма сегодня</span><b id="sTodayNorm">0</b></div>
+</div><div class="card" id="statsRows"></div></section>
+
+<section id="settings" class="view"><div class="title">Настройки</div>
+<div class="card"><div class="setting"><b>Часовой пояс</b><p class="note">Явка и полная сдача вводятся по московскому времени. Ночные часы рассчитываются по местному времени.</p><div class="radioRow"><button class="chip" id="tzAuto" onclick="setTZ('auto')">Автоматически</button><button class="chip" id="tzManual" onclick="setTZ('manual')">Вручную</button></div><div id="tzManualBox" style="display:none"><label>Смещение относительно МСК</label><select id="tzOffset" onchange="saveSettings()"></select></div></div>
+<div class="setting"><b>Оформление</b><div class="radioRow" style="margin-top:9px"><button class="chip" data-theme="light" onclick="setTheme('light')">Светлая</button><button class="chip" data-theme="dark" onclick="setTheme('dark')">Тёмная</button><button class="chip" data-theme="auto" onclick="setTheme('auto')">Автоматически</button></div><p class="note">В автоматическом режиме приложение старается переключать тему после заката/восхода. Если геопозиция недоступна — используется тема iPhone.</p></div>
+<div class="setting"><b>Резервная копия</b><p class="note" id="backupStatus">Автокопия создаётся на этом устройстве после каждого изменения.</p><button class="btn ghost" onclick="exportData()">Скачать резервную копию</button><label class="btn ghost" style="display:block;text-align:center;margin-top:8px">Восстановить из файла<input type="file" accept="application/json" onchange="importData(this)" style="display:none"></label></div>
+<div class="setting"><b>Работа офлайн</b><p class="note">Маршруты и события хранятся на устройстве. После обновления service-worker приложение продолжит открываться без сети.</p></div><div class="setting"><b>Конфиденциальность</b><p class="note">Информация об обработке и хранении данных.</p><button class="btn ghost" type="button" onclick="window.location.href='./privacy.html'">🔒 Политика конфиденциальности</button></div></div></section>
+</main>
+
+<nav><button class="active" onclick="showView('home',0)"><b>⌂</b>Главная</button><button onclick="showView('routes',1)"><b>🚆</b>Маршруты</button><button onclick="showView('calendar',2)"><b>▣</b>Календарь</button><button onclick="showView('stats',3)"><b>▥</b>Статистика</button><button onclick="showView('settings',4)"><b>•••</b>Ещё</button></nav>
+</div>
+
+<div class="modal" id="routeModal"><div class="sheet routeSheet">
+<div class="sheetHead"><h2 id="routeTitle">Новый маршрут</h2><div class="routeHeadActions"><button class="routeQuickSave" onclick="saveRoute()" aria-label="Сохранить маршрут">✓</button><button class="close" onclick="closeModal('routeModal')">×</button></div></div><input type="hidden" id="rId">
+<div class="routeBlock"><div class="routeBlockHead"><span class="routeIcon">🔗</span><b>Общая информация</b></div><div class="twocol"><div><label>Откуда</label><input id="rFrom" placeholder="Могоча"></div><div><label>Куда</label><input id="rTo" placeholder="Чернышевск"></div></div></div>
+<div class="legCountBox"><span class="legCountLabel">Количество плеч</span><div class="legCountSwitch"><button type="button" id="legCount1" onclick="setLegCount(1)">1 плечо</button><button type="button" id="legCount2" onclick="setLegCount(2)">2 плеча</button></div></div>
+<div class="routeBlock"><div class="routeBlockHead"><span class="legBadge">1</span><b>Первое плечо (туда)</b></div><div class="twocol"><div><label>📅 Явка — МСК</label><input id="rCall1" type="hidden"><button type="button" class="dtPick" data-dt="rCall1" onclick="openWheelPicker('rCall1')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div><div><label>🕐 Полная сдача — МСК</label><input id="rEnd1" type="hidden"><button type="button" class="dtPick" data-dt="rEnd1" onclick="openWheelPicker('rEnd1')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div></div>
+<div class="passengerBox"><label class="passengerToggle"><input id="rPassenger1On" type="checkbox" onchange="togglePassenger(1)"><span>🚃 Пассажиром</span></label><div id="passengerFields1" class="passengerFields" style="display:none"><div class="twocol"><div><label>Начало — МСК</label><input id="rPassengerStart1" type="hidden"><button type="button" class="dtPick" data-dt="rPassengerStart1" onclick="openWheelPicker('rPassengerStart1')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div><div><label>Окончание — МСК</label><input id="rPassengerEnd1" type="hidden"><button type="button" class="dtPick" data-dt="rPassengerEnd1" onclick="openWheelPicker('rPassengerEnd1')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div></div><div class="passengerTotal"><span>🚃 Пассажирские часы</span><b id="calcPassenger1">0 ч 00 мин</b></div></div></div>
+<div class="routeTotals"><div class="routeTotal"><span>💼 <small>Отработано</small></span><b id="calcWork1">0 ч 00 мин</b></div><div class="routeTotal"><span>🌙 <small>Ночные часы</small></span><b id="calcNight1">0 ч 00 мин</b></div></div></div>
+<div id="twoLegOnly"><div class="turnRest"><div><span class="routeIcon">🛏️</span><b>Отдых с оборота</b><small>От полной сдачи до следующей явки</small></div><b id="calcTurnRest">0 ч 00 мин</b></div>
+<div class="routeBlock"><div class="routeBlockHead"><span class="legBadge">2</span><b>Второе плечо (обратно)</b></div><div class="twocol"><div><label>📅 Явка — МСК</label><input id="rCall2" type="hidden"><button type="button" class="dtPick" data-dt="rCall2" onclick="openWheelPicker('rCall2')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div><div><label>🕐 Полная сдача — МСК</label><input id="rEnd2" type="hidden"><button type="button" class="dtPick" data-dt="rEnd2" onclick="openWheelPicker('rEnd2')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div></div>
+<div class="passengerBox"><label class="passengerToggle"><input id="rPassenger2On" type="checkbox" onchange="togglePassenger(2)"><span>🚃 Пассажиром</span></label><div id="passengerFields2" class="passengerFields" style="display:none"><div class="twocol"><div><label>Начало — МСК</label><input id="rPassengerStart2" type="hidden"><button type="button" class="dtPick" data-dt="rPassengerStart2" onclick="openWheelPicker('rPassengerStart2')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div><div><label>Окончание — МСК</label><input id="rPassengerEnd2" type="hidden"><button type="button" class="dtPick" data-dt="rPassengerEnd2" onclick="openWheelPicker('rPassengerEnd2')"><span class="dtDate">—</span><span class="dtTime">—</span></button></div></div><div class="passengerTotal"><span>🚃 Пассажирские часы</span><b id="calcPassenger2">0 ч 00 мин</b></div></div></div>
+<div class="routeTotals"><div class="routeTotal"><span>💼 <small>Отработано</small></span><b id="calcWork2">0 ч 00 мин</b></div><div class="routeTotal"><span>🌙 <small>Ночные часы</small></span><b id="calcNight2">0 ч 00 мин</b></div></div></div>
+</div><div class="routeSummary"><div class="routeBlockHead"><span class="routeIcon">∑</span><b>Всего по маршруту</b></div><div><span>Работа</span><b id="sumWork">0 ч 00 мин</b></div><div><span>Ночные</span><b id="sumNight">0 ч 00 мин</b></div><div><span>Пассажиром</span><b id="sumPassenger">0 ч 00 мин</b></div><div><span>Отдых с оборота</span><b id="sumRest">0 ч 00 мин</b></div></div>
+<p class="note">Маршрут можно сохранить незавершённым и дописать позже.</p><button class="btn saveRouteBtn" onclick="saveRoute()">✓ Сохранить маршрут</button><button class="btn danger" id="deleteRouteBtn" onclick="deleteRoute()" style="display:none">🗑 Удалить маршрут</button>
+</div></div>
+
+<div class="modal" id="eventModal"><div class="sheet"><div class="sheetHead"><h2 id="eventTitle">Событие</h2><button class="close" onclick="closeModal('eventModal')">×</button></div><input type="hidden" id="eId"><label>Тип</label><select id="eType"><option value="sick">Больничный</option><option value="unpaid">Без содержания</option><option value="off">Выходной</option></select><div class="twocol"><div><label>С</label><input id="eStart" type="date"></div><div><label>По</label><input id="eEnd" type="date"></div></div><button class="btn" style="margin-top:12px" onclick="saveEvent()">Сохранить</button><button class="btn danger" id="deleteEventBtn" onclick="deleteEvent()" style="display:none">Удалить</button></div></div>
+
+<div class="wheelOverlay" id="wheelOverlay" onclick="if(event.target===this)closeWheelPicker()">
+ <div class="wheelSheet">
+  <div class="wheelHead"><button type="button" onclick="closeWheelPicker()">Отмена</button><b>Дата и время</b><button type="button" class="wheelDone" onclick="applyWheelPicker()">Готово</button></div>
+  <div class="wheelLabels"><span>День</span><span>Месяц</span><span>Год</span><span>Час</span><span>Мин</span></div>
+  <div class="wheelBody">
+   <div class="wheelCol" id="wDay"></div><div class="wheelCol" id="wMonth"></div><div class="wheelCol" id="wYear"></div><div class="wheelCol" id="wHour"></div><div class="wheelCol" id="wMinute"></div>
+   <div class="wheelFocus"></div>
+  </div>
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+function isIOSDevice(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function isAndroidDevice(){return /Android/i.test(navigator.userAgent)}
+function isStandaloneApp(){
+  // iPhone/iPad: доверяем только системному флагу запуска с иконки.
+  // Это исключает регистрацию при обычном открытии ссылки в Safari.
+  if(isIOSDevice()) return window.navigator.standalone===true;
+  // Android/другие PWA: standalone определяется display-mode.
+  return window.matchMedia('(display-mode: standalone)').matches;
+}
+function applyInstallGate(){
+  const gate=document.getElementById('installGate');
+  const ios=document.getElementById('iosInstallSteps');
+  const android=document.getElementById('androidInstallSteps');
+  const mobile=isIOSDevice()||isAndroidDevice();
+  const installed=isStandaloneApp();
+  if(ios)ios.style.display=isAndroidDevice()?'none':'block';
+  if(android)android.style.display=isAndroidDevice()?'block':'none';
+  if(mobile&&!installed){
+    if(gate){gate.classList.add('show');gate.setAttribute('aria-hidden','false')}
+    return true;
+  }
+  if(gate){gate.classList.remove('show');gate.setAttribute('aria-hidden','true')}
+  return false;
+}
+const V35_INSTALL_GATE_ACTIVE=applyInstallGate();
+
+const $=id=>document.getElementById(id);
+const pageTitle=$('pageTitle'),todayLabel=$('todayLabel'),worked=$('worked'),norm=$('norm'),
+todayNorm=$('todayNorm'),nightEl=$('night'),holidayHours=$('holidayHours'),sickDays=$('sickDays'),
+unpaidDays=$('unpaidDays'),offDays=$('offDays'),trips=$('trips'),bar=$('bar'),
+sWorked=$('sWorked'),sNorm=$('sNorm'),sTodayNorm=$('sTodayNorm'),statsRows=$('statsRows'),
+routeList=$('routeList'),cal=$('cal'),eventList=$('eventList'),tzAuto=$('tzAuto'),
+tzManual=$('tzManual'),tzManualBox=$('tzManualBox'),tzOffset=$('tzOffset'),
+routeModal=$('routeModal'),routeTitle=$('routeTitle'),rId=$('rId'),rFrom=$('rFrom'),rTo=$('rTo'),
+rCall1=$('rCall1'),rEnd1=$('rEnd1'),rCall2=$('rCall2'),rEnd2=$('rEnd2'),
+rPassenger1On=$('rPassenger1On'),rPassengerStart1=$('rPassengerStart1'),rPassengerEnd1=$('rPassengerEnd1'),rPassenger2On=$('rPassenger2On'),rPassengerStart2=$('rPassengerStart2'),rPassengerEnd2=$('rPassengerEnd2'),
+calcWork1=$('calcWork1'),calcNight1=$('calcNight1'),calcTurnRest=$('calcTurnRest'),
+calcWork2=$('calcWork2'),calcNight2=$('calcNight2'),deleteRouteBtn=$('deleteRouteBtn'),
+eventModal=$('eventModal'),eventTitle=$('eventTitle'),eId=$('eId'),eType=$('eType'),
+eStart=$('eStart'),eEnd=$('eEnd'),deleteEventBtn=$('deleteEventBtn');
+if('serviceWorker'in navigator && isStandaloneApp())window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=353').then(r=>r.update()).catch(()=>{}));
+const KEY='moiMarshrut';
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+if(!state||typeof state!=='object'){
+ state={routes:[],events:[],settings:{}};
+ try{
+  const raw=localStorage.getItem('moiMarshrut_autoBackup')||localStorage.getItem('moiMarshrut_autoBackup_prev');
+  const x=raw?JSON.parse(raw):null;
+  if(x&&Array.isArray(x.routes)&&Array.isArray(x.events))state=x;
+ }catch(e){}
+}
+state.routes=Array.isArray(state.routes)?state.routes:[];state.events=Array.isArray(state.events)?state.events:[];state.settings=state.settings||{};
+state.settings.tzMode=state.settings.tzMode||'auto';state.settings.tzOffset=Number.isFinite(+state.settings.tzOffset)?+state.settings.tzOffset:0;state.settings.theme=state.settings.theme||'dark';
+const monthNames=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const federalHolidayMD=new Set(['01-01','01-02','01-03','01-04','01-05','01-06','01-07','01-08','02-23','03-08','05-01','05-09','06-12','11-04']);
+const federalHolidayNames={'01-01':'Новогодние каникулы','01-02':'Новогодние каникулы','01-03':'Новогодние каникулы','01-04':'Новогодние каникулы','01-05':'Новогодние каникулы','01-06':'Новогодние каникулы','01-07':'Рождество Христово','01-08':'Новогодние каникулы','02-23':'День защитника Отечества','03-08':'Международный женский день','05-01':'Праздник Весны и Труда','05-09':'День Победы','06-12':'День России','11-04':'День народного единства'};
+const productionCalendar={
+  2025:{extraOff:new Set(['2025-05-02','2025-05-08','2025-06-13','2025-11-03','2025-12-31']),extraWork:new Set(['2025-11-01']),shortDays:new Set(['2025-03-07','2025-04-30','2025-06-11','2025-11-01'])},
+  2026:{extraOff:new Set(['2026-01-09','2026-12-31']),extraWork:new Set([]),shortDays:new Set(['2026-04-30','2026-05-08','2026-06-11','2026-11-03'])},
+  2027:{extraOff:new Set(['2027-02-22','2027-05-03','2027-05-10','2027-06-14','2027-11-05','2027-12-31']),extraWork:new Set(['2027-02-20']),shortDays:new Set(['2027-02-20','2027-03-05','2027-04-30','2027-06-11','2027-11-03'])}
+};
+function isFederalHolidayDate(d){return federalHolidayMD.has(pad(d.getMonth()+1)+'-'+pad(d.getDate()))}
+function isProductionDayOff(d){let pc=productionCalendar[d.getFullYear()],k=dk(d);if(isFederalHolidayDate(d))return true;if(pc&&pc.extraWork.has(k))return false;if(pc&&pc.extraOff.has(k))return true;return d.getDay()===0||d.getDay()===6}
+function isShortWorkday(d){let pc=productionCalendar[d.getFullYear()];return !!(pc&&pc.shortDays.has(dk(d)))}
+let viewDate=new Date(); viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth(),1);
+function pad(n){return String(n).padStart(2,'0')}function dk(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function fmt(m){m=Math.max(0,Math.round(+m||0));return Math.floor(m/60)+' ч '+pad(m%60)+' мин'}
+function mins(a,b){if(!a||!b)return 0;let x=new Date(a),y=new Date(b);return isFinite(x)&&isFinite(y)&&y>x?(y-x)/60000:0}
+function routeStart(r,n){return r['passengerStart'+n]||(r['call'+n]||'')}
+function routeEnd(r,n){return (r['passengerStart'+n]&&r['passengerEnd'+n])?r['passengerEnd'+n]:(r['end'+n]||'')}
+function legComplete(r,n){return !!((r['call'+n]&&r['end'+n])||(r['passengerStart'+n]&&r['passengerEnd'+n]))}
+function routeDate(r){let s=routeStart(r,1)||routeStart(r,2)||r.homeReport||r.date;return s?(s.length===10?new Date(s+'T12:00'):new Date(s)):new Date(0)}
+function migrate(){
+ state.routes.forEach((r,i)=>{r.id=r.id||('r'+Date.now()+i);r.legCount=(r.legCount===1?1:2);if(!r.call1)r.call1=r.homeReport||r.startDT||'';if(!r.end1)r.end1=r.turnSurrender||r.endDT||'';if(!r.call2)r.call2=r.turnReport||'';if(!r.end2)r.end2=r.homeSurrender||'';if(!r.from)r.from=r.from1||r.from||'';if(!r.to)r.to=r.to1||r.to||''});
+ state.events.forEach((e,i)=>{e.id=e.id||('e'+Date.now()+i);if(e.type==='leave')e.type='unpaid'});
+ persist(false)
+}
+function getOffset(){
+ if(state.settings.tzMode==='manual')return +state.settings.tzOffset||0;
+ // Разница местного часового пояса устройства и Москвы (UTC+3), в часах.
+ return (-new Date().getTimezoneOffset()/60)-3;
+}
+function localShifted(ms){return new Date(ms+getOffset()*3600000)}
+function nightMinutes(a,b){
+ if(!a||!b)return 0;let A=new Date(a).getTime(),B=new Date(b).getTime();if(!(B>A))return 0;
+ let off=getOffset()*3600000, LA=new Date(A+off), LB=new Date(B+off), cur=new Date(LA.getFullYear(),LA.getMonth(),LA.getDate());
+ let total=0;
+ for(;cur<=LB;cur.setDate(cur.getDate()+1)){let n0=cur.getTime(),n5=n0+5*3600000;total+=Math.max(0,Math.min(LB.getTime(),n5)-Math.max(LA.getTime(),n0))/60000}
+ return total
+}
+function holidayMinutes(a,b){
+ if(!a||!b)return 0;let A=new Date(a).getTime(),B=new Date(b).getTime();if(!(B>A))return 0;let total=0,cur=new Date(A);cur.setHours(0,0,0,0);
+ while(cur.getTime()<B){let next=new Date(cur);next.setDate(next.getDate()+1);if(isFederalHolidayDate(cur))total+=Math.max(0,Math.min(B,next)-Math.max(A,cur))/60000;cur=next}return total
+}
+function work(r){return mins(r.call1,r.end1)+(r.legCount===1?0:mins(r.call2,r.end2))}function night(r){return nightMinutes(r.call1,r.end1)+(r.legCount===1?0:nightMinutes(r.call2,r.end2))}function passenger(r){return mins(r.passengerStart1,r.passengerEnd1)+(r.legCount===1?0:mins(r.passengerStart2,r.passengerEnd2))}function complete(r){return r.legCount===1?legComplete(r,1):(legComplete(r,1)&&legComplete(r,2))}
+function inMonth(d,y,m){return d&&d.getFullYear()===y&&d.getMonth()===m}
+function monthNorm(y,m){let d=new Date(y,m,1),n=0;while(d.getMonth()===m){if(!isProductionDayOff(d))n+=(isShortWorkday(d)?7:8)*60;d.setDate(d.getDate()+1)}return n}
+function normToday(y,m){let now=new Date();if(now<new Date(y,m,1))return 0;let limit=(now.getFullYear()===y&&now.getMonth()===m)?now.getDate():new Date(y,m+1,0).getDate(),n=0;for(let d=1;d<=limit;d++){let x=new Date(y,m,d);if(!isProductionDayOff(x))n+=(isShortWorkday(x)?7:8)*60}return n}
+function daysOverlap(e,y,m){let s=new Date(e.start+'T12:00'),en=new Date(e.end+'T12:00'),a=new Date(y,m,1,12),b=new Date(y,m+1,0,12);let lo=s>a?s:a,hi=en<b?en:b;return hi>=lo?Math.floor((hi-lo)/86400000)+1:0}
+function calc(){let y=viewDate.getFullYear(),m=viewDate.getMonth(),rs=state.routes.filter(r=>inMonth(routeDate(r),y,m));let hh=rs.reduce((a,r)=>a+holidayMinutes(r.call1,r.end1)+(r.legCount===1?0:holidayMinutes(r.call2,r.end2)),0),worked=rs.reduce((a,r)=>a+work(r)+passenger(r),0)+hh,ng=rs.reduce((a,r)=>a+night(r),0),pass=rs.reduce((a,r)=>a+passenger(r),0);let sick=state.events.filter(e=>e.type==='sick').reduce((a,e)=>a+daysOverlap(e,y,m),0),unpaid=state.events.filter(e=>e.type==='unpaid').reduce((a,e)=>a+daysOverlap(e,y,m),0),off=state.events.filter(e=>e.type==='off').reduce((a,e)=>a+daysOverlap(e,y,m),0);return{worked,ng,pass,hh,sick,unpaid,off,trips:rs.filter(complete).length,norm:monthNorm(y,m),today:normToday(y,m)}}
+function render(){updateBackupStatus();
+ let c=calc(),y=viewDate.getFullYear(),m=viewDate.getMonth();document.querySelectorAll('.monthName').forEach(x=>x.textContent=monthNames[m]+' '+y);
+ worked.textContent=fmt(c.worked);norm.textContent=fmt(c.norm);todayNorm.textContent=fmt(c.today);nightEl.textContent=fmt(c.ng);passengerHours.textContent=fmt(c.pass);holidayHours.textContent=fmt(c.hh);sickDays.textContent=c.sick+' дн.';unpaidDays.textContent=c.unpaid+' дн.';offDays.textContent=c.off+' дн.';trips.textContent=c.trips;bar.style.width=Math.min(100,c.norm?c.worked/c.norm*100:0)+'%';
+ sWorked.textContent=fmt(c.worked);sNorm.textContent=fmt(c.norm);sTodayNorm.textContent=fmt(c.today);statsRows.innerHTML=[['🌙','Ночные часы',fmt(c.ng)],['🚃','Пассажирские часы',fmt(c.pass)],['🎁','Праздничные часы',fmt(c.hh)],['🏥','Больничные',c.sick+' дн.'],['📄','Без содержания',c.unpaid+' дн.'],['🏠','Выходные',c.off+' дн.'],['🚆','Количество поездок',c.trips]].map(x=>`<div class="row"><div class="icon">${x[0]}</div><div class="grow label">${x[1]}</div><div class="value">${x[2]}</div></div>`).join('');
+ renderRoutes();renderCalendar();renderEvents();renderSettings()
+}
+function mskDateLabel(s){
+ if(!s)return 'Без даты';
+ let d=s.slice(0,10).split('-');
+ return d.length===3?`${d[2]}.${d[1]}.${d[0]}`:'Без даты';
+}
+function mskTimeLabel(s){return s&&s.length>=16?s.slice(11,16):'—'}
+function homeRestMinutes(r){
+ const finish=r.legCount===1?routeEnd(r,1):(routeEnd(r,2)||routeEnd(r,1));
+ if(!finish)return null;
+ const end=new Date(finish).getTime();
+ let next=null;
+ state.routes.forEach(x=>{
+   if(x.id===r.id)return;
+   const start=routeStart(x,1)||routeStart(x,2);
+   if(!start)return;
+   const t=new Date(start).getTime();
+   if(t>end && (next===null||t<next))next=t;
+ });
+ return next===null?null:Math.max(0,Math.round((next-end)/60000));
+}
+function renderRoutes(){let arr=state.routes.slice().sort((a,b)=>{
+ const ad=complete(a),bd=complete(b);
+ if(ad!==bd)return ad?1:-1;
+ return routeDate(b)-routeDate(a);
+});routeList.innerHTML=arr.length?arr.map(r=>{
+ let firstEnd=routeEnd(r,1),secondStart=routeStart(r,2),finalEnd=routeEnd(r,2)||firstEnd;
+ let rest=mins(firstEnd,secondStart),home=homeRestMinutes(r);
+ let homeText=!finalEnd?'—':(home===null?'до следующей явки':fmt(home));
+ return `<div class="swipeRoute" data-route-id="${r.id}">
+ <button type="button" class="swipeDelete" onclick="event.stopPropagation();deleteRouteFromList('${r.id}')">🗑<span>Удалить</span></button>
+ <div class="route swipeRouteCard" onclick="openSwipedRoute(event,'${r.id}')">
+ <div class="routeTop"><h3>${esc(r.from||'—')} ↔ ${esc(r.to||'—')}</h3><span class="tag ${complete(r)?'':'draft'}">${complete(r)?'Завершён':'Черновик'}</span></div>
+ <p>${mskDateLabel(routeStart(r,1))} · ${r.passengerStart1&&r.passengerEnd1?'Начало пассажиром':'Явка'}: <b>${mskTimeLabel(routeStart(r,1))} МСК</b></p>
+ <p>${finalEnd ? mskDateLabel(finalEnd)+' · '+((r.legCount===1?(r.passengerStart1&&r.passengerEnd1):(r.passengerStart2&&r.passengerEnd2))?'Окончание пассажиром':'Полная сдача')+': <b>'+mskTimeLabel(finalEnd)+' МСК</b>' : 'Окончание маршрута: <b>—</b>'}</p>
+ <p>Работа: <b>${fmt(work(r))}</b> · Ночные: <b>${fmt(night(r))}</b></p>
+ <p>Пассажиром: <b>${fmt(passenger(r))}</b></p>
+ <p>${r.legCount===1?'Домашний отдых: <b>'+homeText+'</b>':'Отдых с оборота: <b>'+fmt(rest)+'</b> · Домашний отдых: <b>'+homeText+'</b>'}</p>
+ </div></div>`;
+}).join(''):'<div class="card empty">Маршрутов пока нет</div>'}
+function routeTouchesDay(r,k){
+  // Work time is entered in Moscow time; calendar work marks follow actual
+  // local dates, using the same timezone offset as night-hour calculation.
+  const targetStart=new Date(k+'T00:00:00').getTime();
+  const targetEnd=targetStart+86400000;
+  const off=getOffset()*3600000;
+  const intervals=r.legCount===1?[[r.call1,r.end1]]:[[r.call1,r.end1],[r.call2,r.end2]];
+  return intervals.some(([a,b])=>{
+    if(!a)return false;
+    let A=new Date(a).getTime()+off;
+    // If surrender isn't entered yet, mark the draft only up to "now".
+    let B=b?new Date(b).getTime()+off:Date.now()+off;
+    if(!(B>A))B=A+60000;
+    return A<targetEnd && B>=targetStart;
+  });
+}
+function renderCalendar(){let y=viewDate.getFullYear(),m=viewDate.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0),start=(first.getDay()+6)%7,h='';for(let i=0;i<start;i++)h+='<div></div>';for(let d=1;d<=last.getDate();d++){let date=new Date(y,m,d),k=y+'-'+pad(m+1)+'-'+pad(d),cls=['day'];if(k===dk(new Date()))cls.push('today');if(isFederalHolidayDate(date))cls.push('holiday');if(state.routes.some(r=>routeTouchesDay(r,k)))cls.push('routeDay');let ev=state.events.find(e=>k>=e.start&&k<=e.end);if(ev)cls.push(ev.type);h+=`<div class="${cls.join(' ')}" onclick="openEvent('${k}')">${d}</div>`}cal.innerHTML=h;renderHolidayInfo(y,m)}
+function renderHolidayInfo(y,m){let items=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){let date=new Date(y,m,d),md=pad(m+1)+'-'+pad(d);if(isFederalHolidayDate(date))items.push({d,name:federalHolidayNames[md]||'Праздничный день'})}let box=document.getElementById('holidayInfo');if(!box)return;box.innerHTML='<div class="holidayInfoTitle">Праздники в этом месяце</div>'+(items.length?items.map(x=>`<div class="holidayInfoItem"><b>${x.d} ${monthNames[m].toLowerCase()}</b> — ${x.name}</div>`).join(''):'<div class="holidayInfoEmpty">В этом месяце праздничных дней нет.</div>')}
+function renderEvents(){let names={sick:'Больничный',unpaid:'Без содержания',off:'Выходной'};eventList.innerHTML=state.events.slice().reverse().map(e=>`<div class="route" onclick="editEvent('${e.id}')"><div class="routeTop"><h3>${names[e.type]||'Событие'}</h3><span class="tag">${e.start} — ${e.end}</span></div><p>Нажмите, чтобы изменить или удалить.</p></div>`).join('')}
+function showView(id,n){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',i===n));pageTitle.textContent=id==='home'?'Рабочее время':({routes:'Маршруты',calendar:'Календарь',stats:'Статистика',settings:'Настройки'}[id]);render()}
+function monthMove(n){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+n,1);render()}
+function setLegCount(n){
+ window.currentLegCount=n===1?1:2;
+ const box=document.getElementById('twoLegOnly');if(box)box.style.display=window.currentLegCount===1?'none':'';
+ const b1=document.getElementById('legCount1'),b2=document.getElementById('legCount2');if(b1)b1.classList.toggle('on',window.currentLegCount===1);if(b2)b2.classList.toggle('on',window.currentLegCount===2);
+ updateRouteCalc();setTimeout(syncDtDisplays,0);
+}
+function openRoute(){rId.value='';rFrom.value='';rTo.value='';rCall1.value='';rEnd1.value='';rCall2.value='';rEnd2.value='';rPassenger1On.checked=false;rPassengerStart1.value='';rPassengerEnd1.value='';rPassenger2On.checked=false;rPassengerStart2.value='';rPassengerEnd2.value='';setLegCount(2);togglePassenger(1);togglePassenger(2);routeTitle.textContent='Новый маршрут';deleteRouteBtn.style.display='none';routeModal.classList.add('show');updateRouteCalc();setTimeout(syncDtDisplays,0)}
+function editRoute(id){let r=state.routes.find(x=>x.id===id);if(!r)return;rId.value=r.id;rFrom.value=r.from||'';rTo.value=r.to||'';rCall1.value=dtInput(r.call1);rEnd1.value=dtInput(r.end1);rCall2.value=dtInput(r.call2);rEnd2.value=dtInput(r.end2);rPassengerStart1.value=dtInput(r.passengerStart1);rPassengerEnd1.value=dtInput(r.passengerEnd1);rPassengerStart2.value=dtInput(r.passengerStart2);rPassengerEnd2.value=dtInput(r.passengerEnd2);rPassenger1On.checked=!!(r.passengerStart1||r.passengerEnd1);rPassenger2On.checked=!!(r.passengerStart2||r.passengerEnd2);setLegCount(r.legCount===1?1:2);togglePassenger(1);togglePassenger(2);routeTitle.textContent='Редактировать маршрут';deleteRouteBtn.style.display='block';routeModal.classList.add('show');updateRouteCalc();setTimeout(syncDtDisplays,0)}
+function dtInput(s){return s?s.slice(0,16):''}
+function saveRoute(){let id=rId.value,r=id?state.routes.find(x=>x.id===id):{id:'r'+Date.now()};let one=window.currentLegCount===1;Object.assign(r,{legCount:one?1:2,from:rFrom.value.trim(),to:rTo.value.trim(),call1:rCall1.value,end1:rEnd1.value,call2:one?'':rCall2.value,end2:one?'':rEnd2.value,passengerStart1:rPassenger1On.checked?rPassengerStart1.value:'',passengerEnd1:rPassenger1On.checked?rPassengerEnd1.value:'',passengerStart2:(!one&&rPassenger2On.checked)?rPassengerStart2.value:'',passengerEnd2:(!one&&rPassenger2On.checked)?rPassengerEnd2.value:''});if(!r.call1&&!r.end1&&!r.call2&&!r.end2&&!r.passengerStart1&&!r.passengerEnd1&&!r.passengerStart2&&!r.passengerEnd2){toast('Укажи хотя бы явку, сдачу или пассажирское время');return}if(!id)state.routes.push(r);persist();closeModal('routeModal');toast(id?'Маршрут обновлён':'Маршрут сохранён');showView('routes',1)}
+function deleteRoute(){if(!rId.value||!confirm('Удалить этот маршрут?'))return;state.routes=state.routes.filter(r=>r.id!==rId.value);persist();closeModal('routeModal');toast('Маршрут удалён')}
+function togglePassenger(n){
+ const on=document.getElementById('rPassenger'+n+'On'),box=document.getElementById('passengerFields'+n);
+ if(box)box.style.display=on&&on.checked?'block':'none';
+ updateRouteCalc();
+ setTimeout(syncDtDisplays,0);
+}
+function updateRouteCalc(){const one=window.currentLegCount===1;calcWork1.textContent=fmt(mins(rCall1.value,rEnd1.value));calcNight1.textContent=fmt(nightMinutes(rCall1.value,rEnd1.value));const rest=one?0:mins((rPassenger1On.checked&&rPassengerStart1.value&&rPassengerEnd1.value)?rPassengerEnd1.value:rEnd1.value,(rPassenger2On.checked&&rPassengerStart2.value&&rPassengerEnd2.value)?rPassengerStart2.value:rCall2.value);calcTurnRest.textContent=fmt(rest);calcWork2.textContent=fmt(one?0:mins(rCall2.value,rEnd2.value));calcNight2.textContent=fmt(one?0:nightMinutes(rCall2.value,rEnd2.value));const p1=rPassenger1On&&rPassenger1On.checked?mins(rPassengerStart1.value,rPassengerEnd1.value):0;const p2=!one&&rPassenger2On&&rPassenger2On.checked?mins(rPassengerStart2.value,rPassengerEnd2.value):0;const cp1=document.getElementById('calcPassenger1'),cp2=document.getElementById('calcPassenger2');if(cp1)cp1.textContent=fmt(p1);if(cp2)cp2.textContent=fmt(p2);const sw=document.getElementById('sumWork'),sn=document.getElementById('sumNight'),sp=document.getElementById('sumPassenger'),sr=document.getElementById('sumRest');if(sw)sw.textContent=fmt(mins(rCall1.value,rEnd1.value)+(one?0:mins(rCall2.value,rEnd2.value)));if(sn)sn.textContent=fmt(nightMinutes(rCall1.value,rEnd1.value)+(one?0:nightMinutes(rCall2.value,rEnd2.value)));if(sp)sp.textContent=fmt(p1+p2);if(sr){sr.textContent=fmt(rest);sr.parentElement.style.display=one?'none':'';}}
+function openEvent(k=''){eId.value='';eType.value='sick';eStart.value=k||dk(new Date());eEnd.value=k||dk(new Date());eventTitle.textContent='Добавить событие';deleteEventBtn.style.display='none';eventModal.classList.add('show')}
+function editEvent(id){let e=state.events.find(x=>x.id===id);if(!e)return;eId.value=e.id;eType.value=e.type;eStart.value=e.start;eEnd.value=e.end;eventTitle.textContent='Редактировать событие';deleteEventBtn.style.display='block';eventModal.classList.add('show')}
+function saveEvent(){if(!eStart.value||!eEnd.value||eEnd.value<eStart.value){toast('Проверь даты');return}let id=eId.value,e=id?state.events.find(x=>x.id===id):{id:'e'+Date.now()};Object.assign(e,{type:eType.value,start:eStart.value,end:eEnd.value});if(!id)state.events.push(e);persist();closeModal('eventModal');toast('Событие сохранено')}
+function deleteEvent(){if(!eId.value||!confirm('Удалить событие?'))return;state.events=state.events.filter(e=>e.id!==eId.value);persist();closeModal('eventModal');toast('Событие удалено')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function setTZ(v){state.settings.tzMode=v;persist();updateRouteCalc()}
+function setTheme(v){state.settings.theme=v;persist()}
+function applyTheme(){let t=state.settings.theme;if(t==='auto')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.body.classList.toggle('light',t==='light')}
+function renderSettings(){tzAuto.classList.toggle('on',state.settings.tzMode==='auto');tzManual.classList.toggle('on',state.settings.tzMode==='manual');tzManualBox.style.display=state.settings.tzMode==='manual'?'block':'none';tzOffset.value=String(state.settings.tzOffset);document.querySelectorAll('[data-theme]').forEach(x=>x.classList.toggle('on',x.dataset.theme===state.settings.theme));applyTheme()}
+function saveSettings(){state.settings.tzOffset=+tzOffset.value;persist();updateRouteCalc()}
+const BACKUP_KEY='moiMarshrut_autoBackup';
+const BACKUP_PREV_KEY='moiMarshrut_autoBackup_prev';
+function persist(r=true){
+ const data=JSON.stringify(state);
+ try{
+   const previous=localStorage.getItem(BACKUP_KEY);
+   if(previous)localStorage.setItem(BACKUP_PREV_KEY,previous);
+   localStorage.setItem(KEY,data);
+   localStorage.setItem(BACKUP_KEY,data);
+   localStorage.setItem('moiMarshrut_backupTime',new Date().toISOString());
+ }catch(e){}
+ if(r)render();
+ updateBackupStatus();
+}
+function updateBackupStatus(){
+ const el=document.getElementById('backupStatus');if(!el)return;
+ const t=localStorage.getItem('moiMarshrut_backupTime');
+ if(!t){el.textContent='Автокопия создаётся на этом устройстве после каждого изменения.';return}
+ const d=new Date(t);
+ el.textContent='Последняя автокопия: '+d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+'. Хранится на этом устройстве.';
+}
+function recoverAutoBackup(){
+ try{
+   const raw=localStorage.getItem(BACKUP_KEY)||localStorage.getItem(BACKUP_PREV_KEY);
+   if(!raw)return false;
+   const x=JSON.parse(raw);
+   if(!x||!Array.isArray(x.routes)||!Array.isArray(x.events))return false;
+   state=x;migrate();localStorage.setItem(KEY,JSON.stringify(state));return true;
+ }catch(e){return false}
+}
+function exportData(){let a=document.createElement('a'),b=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});a.href=URL.createObjectURL(b);a.download='rabochee-vremya-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function importData(inp){let f=inp.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!x.routes||!x.events)throw 0;state=x;migrate();render();toast('Данные восстановлены')}catch(e){toast('Не удалось восстановить данные')}};rd.readAsText(f)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function toast(s){let t=document.getElementById('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1900)}
+for(let o=-8;o<=9;o++){let op=document.createElement('option');op.value=o;op.textContent=(o===0?'МСК':('МСК '+(o>0?'+':'')+o));tzOffset.appendChild(op)}
+if(monthNorm(2026,8)!==176*60){console.error('Ошибка нормы сентября 2026');}
+todayLabel.textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+migrate();render();
+</script>
+
+<script id="v13-wheel-js">
+let wheelTarget=null;
+const wheelMonths=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+function dtParts(v){
+ if(!v)return null;
+ const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+ return m?{y:+m[1],mo:+m[2],d:+m[3],h:+m[4],mi:+m[5]}:null;
+}
+function syncDtDisplays(){
+ document.querySelectorAll('.dtPick').forEach(btn=>{
+  const inp=document.getElementById(btn.dataset.dt),p=dtParts(inp&&inp.value);
+  btn.classList.toggle('empty',!p);
+  btn.querySelector('.dtDate').textContent=p?String(p.d).padStart(2,'0')+'.'+String(p.mo).padStart(2,'0')+'.'+p.y:'Выбрать дату';
+  btn.querySelector('.dtTime').textContent=p?String(p.h).padStart(2,'0')+':'+String(p.mi).padStart(2,'0'):'—:—';
+ });
+}
+function fillWheel(id,values,selected,labels){
+ const el=document.getElementById(id); el.innerHTML='';
+ values.forEach((v,i)=>{const d=document.createElement('div');d.className='wheelItem';d.dataset.value=v;d.textContent=labels?labels[i]:String(v).padStart(2,'0');el.appendChild(d)});
+ requestAnimationFrame(()=>{const ix=Math.max(0,values.indexOf(selected));el.scrollTop=ix*54});
+}
+function wheelValue(id){
+ const el=document.getElementById(id),ix=Math.max(0,Math.min(el.children.length-1,Math.round(el.scrollTop/54)));
+ return +el.children[ix].dataset.value;
+}
+function openWheelPicker(id){
+ wheelTarget=id;
+ const p=dtParts(document.getElementById(id).value),n=new Date();
+ const y=p?p.y:n.getFullYear(),mo=p?p.mo:n.getMonth()+1,d=p?p.d:n.getDate(),h=p?p.h:n.getHours(),mi=p?p.mi:n.getMinutes();
+ fillWheel('wDay',Array.from({length:31},(_,i)=>i+1),d);
+ fillWheel('wMonth',Array.from({length:12},(_,i)=>i+1),mo,wheelMonths);
+ fillWheel('wYear',Array.from({length:9},(_,i)=>n.getFullYear()-4+i),y);
+ fillWheel('wHour',Array.from({length:24},(_,i)=>i),h);
+ fillWheel('wMinute',Array.from({length:60},(_,i)=>i),mi);
+ document.getElementById('wheelOverlay').classList.add('open');
+ document.body.style.overflow='hidden';
+}
+function closeWheelPicker(){document.getElementById('wheelOverlay').classList.remove('open');document.body.style.overflow='';wheelTarget=null}
+function applyWheelPicker(){
+ if(!wheelTarget)return;
+ let y=wheelValue('wYear'),mo=wheelValue('wMonth'),d=wheelValue('wDay'),h=wheelValue('wHour'),mi=wheelValue('wMinute');
+ const maxD=new Date(y,mo,0).getDate(); d=Math.min(d,maxD);
+ const val=y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0')+'T'+String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');
+ const inp=document.getElementById(wheelTarget);inp.value=val;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));
+ syncDtDisplays();if(typeof updateRouteCalc==='function')updateRouteCalc();closeWheelPicker();
+}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[onclick*="openRoute"]'))setTimeout(syncDtDisplays,0)});
+const _oldOpenRoute=window.openRoute;
+if(typeof _oldOpenRoute==='function')window.openRoute=function(){const r=_oldOpenRoute.apply(this,arguments);setTimeout(syncDtDisplays,0);return r};
+setTimeout(syncDtDisplays,0);
+</script>
+
+
+<script id="v17-swipe-js">
+let swipeStartX=0,swipeStartY=0,swipeNode=null,swipeMoved=false;
+document.addEventListener('touchstart',function(e){
+ const n=e.target.closest&&e.target.closest('.swipeRoute');
+ if(!n)return;
+ document.querySelectorAll('.swipeRoute.open').forEach(x=>{if(x!==n)x.classList.remove('open')});
+ swipeNode=n;swipeMoved=false;
+ swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener('touchmove',function(e){
+ if(!swipeNode)return;
+ const dx=e.touches[0].clientX-swipeStartX,dy=e.touches[0].clientY-swipeStartY;
+ if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy))swipeMoved=true;
+},{passive:true});
+document.addEventListener('touchend',function(e){
+ if(!swipeNode)return;
+ const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;
+ if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){
+   swipeNode.classList.toggle('open',dx<0);
+   if(dx>0)swipeNode.classList.remove('open');
+ }
+ setTimeout(()=>{swipeNode=null},0);
+},{passive:true});
+function openSwipedRoute(e,id){
+ const n=e.currentTarget.closest('.swipeRoute');
+ if(swipeMoved){swipeMoved=false;return}
+ if(n&&n.classList.contains('open')){n.classList.remove('open');return}
+ editRoute(id);
+}
+function deleteRouteFromList(id){
+ if(!confirm('Удалить этот маршрут?'))return;
+ state.routes=state.routes.filter(r=>r.id!==id);
+ persist();
+ toast('Маршрут удалён');
+}
+</script>
+
+<script id="v18-portrait-lock">
+async function lockPortrait(){try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('portrait')}catch(e){}}
+window.addEventListener('load',lockPortrait);
+window.addEventListener('orientationchange',()=>setTimeout(lockPortrait,150));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortrait()});
+</script>
+
+
+<!-- v20: Supabase device access control -->
+<style id="v20-access-style">
+#accessGate{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:24px;background:#06111bf2;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+#accessGate.show{display:flex}
+#accessGate .accessCard{width:min(420px,100%);padding:26px 22px;border:1px solid #203b50;border-radius:24px;background:#0b1c2a;box-shadow:0 18px 50px #0008;text-align:center}
+#accessGate .accessIcon{font-size:42px;margin-bottom:10px}
+#accessGate h2{margin:0 0 10px;font-size:24px}
+#accessGate p{margin:0;color:#a8bac8;line-height:1.45;font-size:15px}
+#accessGate button{margin-top:18px;width:100%;border:0;border-radius:14px;padding:14px 16px;background:#16d98a;color:#04120d;font-weight:800;font-size:16px}
+
+#ownerGate{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:24px;background:#06111bf7;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+#ownerGate.show{display:flex}
+#ownerGate .ownerCard{width:min(420px,100%);padding:26px 22px;border:1px solid #203b50;border-radius:24px;background:#0b1c2a;box-shadow:0 18px 50px #0008}
+#ownerGate h2{margin:0 0 8px;font-size:24px;text-align:center}
+#ownerGate input{width:100%;border:1px solid #29465c;border-radius:14px;padding:14px 15px;background:#071521;color:#fff;font-size:17px;outline:none}
+#ownerGate input:focus{border-color:#378cff}
+#ownerGate button{margin-top:12px;width:100%;border:0;border-radius:14px;padding:14px 16px;background:#378cff;color:#fff;font-weight:800;font-size:16px}
+#ownerGate .ownerError{min-height:20px;margin-top:10px;color:#ff8d95;font-size:13px;text-align:center}
+</style>
+<div id="ownerGate" aria-live="polite">
+  <div class="ownerCard">
+    <h2>Ваше имя и фамилия</h2>
+    <input id="ownerNameInput" type="text" maxlength="80" autocomplete="name" placeholder="Иван Иванов">
+    <div class="ownerError" id="ownerNameError"></div>
+    <button id="ownerNameSave" type="button">Продолжить</button>
+  </div>
+</div>
+<div id="accessGate" aria-live="polite">
+  <div class="accessCard">
+    <div class="accessIcon" id="accessIcon">🔐</div>
+    <h2 id="accessTitle">Проверка доступа</h2>
+    <p id="accessText">Подождите…</p>
+    <button id="accessRetry" type="button" style="display:none">Проверить снова</button>
+  </div>
+</div>
+<script id="v32-supabase-anonymous-auth-device-access">
+(function(){
+  // v35.3: ЖЁСТКИЙ INSTALL GATE для iOS/Android.
+  // В обычной вкладке Safari/Chrome код Supabase вообще не запускается:
+  // не создаётся auth.uid, device_id и запись устройства.
+  // Регистрация и проверка доступа работают только после запуска установленной PWA с иконки.
+  const IOS_PWA_OK = !isIOSDevice() || window.navigator.standalone===true;
+  const OTHER_PWA_OK = isIOSDevice() || window.matchMedia('(display-mode: standalone)').matches;
+  if(!IOS_PWA_OK || !OTHER_PWA_OK){
+    console.log('Рабочее время v35.3: браузерный режим — Supabase и регистрация полностью отключены.');
+    return;
+  }
+
+  const SUPABASE_URL='https://pwhryvpmjwlfysprdndr.supabase.co';
+  const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
+  const DEVICE_KEY='rv_device_id_v1';
+  const ACCESS_KEY='rv_access_allowed_v1';
+  const LAST_CHECK_KEY='rv_access_last_check_v1';
+  const BACKUP_CHECK_KEY='rv_access_last_check_backup_v1';
+  const OWNER_NAME_KEY='rv_owner_name_v1';
+  const CHECK_INTERVAL=7*24*60*60*1000;
+  const AUTH_ACCESS_KEY='rv_sb_access_token_v1';
+  const AUTH_REFRESH_KEY='rv_sb_refresh_token_v1';
+  const AUTH_EXPIRES_KEY='rv_sb_expires_at_v1';
+
+  function uuid(){
+    if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+      const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)
+    });
+  }
+
+  function getDeviceId(){
+    let id=localStorage.getItem(DEVICE_KEY);
+    if(!id){id=uuid();localStorage.setItem(DEVICE_KEY,id)}
+    return id;
+  }
+
+  function deviceName(){
+    const ua=navigator.userAgent||'';
+    if(/iPhone/i.test(ua))return 'iPhone';
+    if(/iPad/i.test(ua))return 'iPad';
+    if(/Android/i.test(ua))return 'Android';
+    return 'Устройство';
+  }
+
+  function saveAuthSession(data){
+    if(!data||!data.access_token)throw new Error('Supabase Auth did not return access_token');
+    localStorage.setItem(AUTH_ACCESS_KEY,data.access_token);
+    if(data.refresh_token)localStorage.setItem(AUTH_REFRESH_KEY,data.refresh_token);
+    const expiresAt=data.expires_at ? Number(data.expires_at)*1000 : Date.now()+(Number(data.expires_in||3600)*1000);
+    localStorage.setItem(AUTH_EXPIRES_KEY,String(expiresAt));
+    return data.access_token;
+  }
+
+  async function authRequest(path,body){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(SUPABASE_URL+'/auth/v1/'+path,{
+        method:'POST',
+        headers:{'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify(body||{}),cache:'no-store',signal:controller.signal
+      });
+      const txt=await r.text();
+      let data={}; try{data=txt?JSON.parse(txt):{}}catch(_){data={message:txt}}
+      if(!r.ok)throw new Error('auth '+path+': '+r.status+' '+(data.msg||data.message||txt));
+      return data;
+    }finally{clearTimeout(timer)}
+  }
+
+  async function ensureAuth(){
+    const token=localStorage.getItem(AUTH_ACCESS_KEY);
+    const expires=Number(localStorage.getItem(AUTH_EXPIRES_KEY)||0);
+    if(token && expires>Date.now()+60000)return token;
+
+    const refresh=localStorage.getItem(AUTH_REFRESH_KEY);
+    if(refresh){
+      try{return saveAuthSession(await authRequest('token?grant_type=refresh_token',{refresh_token:refresh}))}
+      catch(e){
+        localStorage.removeItem(AUTH_ACCESS_KEY);localStorage.removeItem(AUTH_REFRESH_KEY);localStorage.removeItem(AUTH_EXPIRES_KEY);
+      }
+    }
+
+    // Supabase anonymous sign-in: creates a real auth.uid() for this browser/device.
+    return saveAuthSession(await authRequest('signup',{}));
+  }
+
+  async function rpc(name,body){
+    const accessToken=await ensureAuth();
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),8000);
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+name,{
+        method:'POST',
+        headers:{
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':'Bearer '+accessToken,
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(body),
+        cache:'no-store',
+        signal:controller.signal
+      });
+      if(!r.ok)throw new Error(name+': '+r.status+' '+await r.text());
+      return await r.json();
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  function row(v){return Array.isArray(v)?(v[0]||{}):(v||{})}
+
+  function gate(mode,msg){
+    const g=document.getElementById('accessGate'),
+          title=document.getElementById('accessTitle'),
+          text=document.getElementById('accessText'),
+          icon=document.getElementById('accessIcon'),
+          retry=document.getElementById('accessRetry');
+    if(!g)return;
+    g.classList.add('show');
+    retry.style.display=mode==='offline'?'block':'none';
+
+    if(mode==='blocked'){
+      icon.textContent='⛔️';
+      title.textContent='Доступ заблокирован';
+      text.textContent=msg||'Доступ к приложению отключён владельцем.';
+    }else if(mode==='offline'){
+      icon.textContent='📡';
+      title.textContent='Нужен интернет';
+      text.textContent=msg||'Прошло более 7 дней с последней успешной проверки. Подключитесь к интернету и нажмите «Проверить снова».';
+    }else{
+      icon.textContent='🔐';
+      title.textContent='Проверка доступа';
+      text.textContent=msg||'Подождите…';
+    }
+  }
+
+  function openApp(){
+    const g=document.getElementById('accessGate');
+    if(g)g.classList.remove('show');
+  }
+
+  function getLastCheck(){
+    const a=Number(localStorage.getItem(LAST_CHECK_KEY)||0);
+    const b=Number(localStorage.getItem(BACKUP_CHECK_KEY)||0);
+    return Math.max(a,b);
+  }
+
+  function accessIsFresh(){
+    if(localStorage.getItem(ACCESS_KEY)!=='1')return false;
+    const last=getLastCheck();
+    return last>0 && Date.now()>=last && (Date.now()-last)<CHECK_INTERVAL;
+  }
+
+  function saveAllowed(){
+    const now=Date.now();
+    localStorage.setItem(ACCESS_KEY,'1');
+    localStorage.setItem(LAST_CHECK_KEY,String(now));
+    localStorage.setItem(BACKUP_CHECK_KEY,String(now));
+  }
+
+  function saveBlocked(){
+    localStorage.setItem(ACCESS_KEY,'0');
+    localStorage.removeItem(LAST_CHECK_KEY);
+    localStorage.removeItem(BACKUP_CHECK_KEY);
+  }
+
+  // Переход со старой версии:
+  // если устройство уже было разрешено, но старая версия не сохранила дату,
+  // один раз создаём 7-дневный офлайн-срок.
+  if(localStorage.getItem(ACCESS_KEY)==='1' && getLastCheck()===0){
+    const now=Date.now();
+    localStorage.setItem(LAST_CHECK_KEY,String(now));
+    localStorage.setItem(BACKUP_CHECK_KEY,String(now));
+  }
+
+  let checking=false;
+
+
+  function cleanOwnerName(v){
+    return String(v||'').trim().replace(/\s+/g,' ').slice(0,80);
+  }
+
+  function askOwnerName(){
+    return new Promise(resolve=>{
+      const g=document.getElementById('ownerGate');
+      const input=document.getElementById('ownerNameInput');
+      const btn=document.getElementById('ownerNameSave');
+      const err=document.getElementById('ownerNameError');
+      if(!g||!input||!btn){resolve('');return}
+
+      const saved=cleanOwnerName(localStorage.getItem(OWNER_NAME_KEY));
+      if(saved){resolve(saved);return}
+
+      g.classList.add('show');
+      input.value='';
+      err.textContent='';
+
+      const submit=()=>{
+        const name=cleanOwnerName(input.value);
+        if(name.length<3 || !name.includes(' ')){
+          err.textContent='Введите имя и фамилию.';
+          input.focus();
+          return;
+        }
+        localStorage.setItem(OWNER_NAME_KEY,name);
+        g.classList.remove('show');
+        resolve(name);
+      };
+
+      btn.onclick=submit;
+      input.onkeydown=e=>{if(e.key==='Enter')submit()};
+      setTimeout(()=>input.focus(),100);
+    });
+  }
+
+  async function ensureOwnerName(deviceId){
+    const name=await askOwnerName();
+    if(!name)return;
+    try{
+      await rpc('set_device_owner',{
+        p_device_id:deviceId,
+        p_owner_name:name
+      });
+    }catch(e){
+      // Имя уже сохранено на телефоне. При следующем успешном запуске
+      // приложение снова попробует отправить его на сервер.
+      console.error('Owner name save failed',e);
+      throw e;
+    }
+  }
+
+  async function verify(){
+    if(checking)return accessIsFresh();
+    checking=true;
+    const id=getDeviceId();
+
+    // ВАЖНО: не доверяем navigator.onLine на iPhone.
+    // Даже если браузер считает устройство офлайн, сначала реально пробуем Supabase.
+    try{
+      let chk;
+
+      try{
+        chk=row(await rpc('check_device',{p_device_id:id}));
+      }catch(checkErr){
+        // Для совершенно нового устройства check_device может не вернуть запись.
+        // В таком случае сразу пробуем зарегистрировать его.
+        const reg=row(await rpc('register_device',{
+          p_device_id:id,
+          p_device_name:deviceName()
+        }));
+        if(reg.active===false){
+          saveBlocked();gate('blocked');return false;
+        }
+        chk=row(await rpc('check_device',{p_device_id:id}));
+      }
+
+      if(!chk || chk.registered===false){
+        const reg=row(await rpc('register_device',{
+          p_device_id:id,
+          p_device_name:deviceName()
+        }));
+        if(reg.active===false){
+          saveBlocked();gate('blocked');return false;
+        }
+        chk=row(await rpc('check_device',{p_device_id:id}));
+      }
+
+      if(chk.active===false){
+        saveBlocked();gate('blocked');return false;
+      }
+
+      if(chk.registered===true && chk.active===true){
+        saveAllowed();
+        try{ await ensureOwnerName(id); }catch(ownerErr){}
+        openApp();
+        return true;
+      }
+
+      throw new Error('Unexpected access response: '+JSON.stringify(chk));
+    }catch(e){
+      console.error('Access check failed',e);
+
+      // Только после реальной неудачной попытки связи с Supabase
+      // переходим в 7-дневный офлайн-режим.
+      if(accessIsFresh()){
+        openApp();
+        return true;
+      }
+
+      gate('offline','Не удалось связаться с сервером доступа. Интернет может работать, но проверка Supabase не прошла. Нажмите «Проверить снова».');
+      return false;
+    }finally{
+      checking=false;
+    }
+  }
+
+  const retry=document.getElementById('accessRetry');
+  if(retry)retry.addEventListener('click',()=>verify());
+
+  // Когда интернет появляется, сразу проверяем Supabase.
+  // Успешная проверка снова даёт полные 7 суток.
+  window.addEventListener('online',()=>verify());
+
+  // При запуске сначала мгновенно открываем приложение,
+  // если локальные 7 суток ещё действуют.
+  if(accessIsFresh())openApp();
+
+  // Если интернет есть — обновляем разрешение и таймер.
+  // Если его нет — verify() оставит приложение открытым в пределах 7 суток.
+  verify();
+})();
+</script>
+
+
+<!-- Privacy Policy page: rabocheevremya.ru/privacy -->
+<section id="privacyPolicyPage" style="display:none;max-width:760px;margin:0 auto;padding:24px 18px 100px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.55;color:var(--text);background:var(--bg2);min-height:100vh">
+  <h1>Политика конфиденциальности</h1>
+  <p><b>Сервис «Рабочее время»</b></p>
+  <p>Настоящая Политика конфиденциальности описывает порядок обработки информации при использовании веб-приложения «Рабочее время».</p>
+  <h2>1. Какие данные используются</h2>
+  <p>Приложение предназначено для учёта рабочего времени. Данные о маршрутах, рабочем времени, отдыхе и пользовательских событиях хранятся на устройстве пользователя, если отдельно не указано иное.</p>
+  <h2>2. Локальное хранение</h2>
+  <p>Для работы приложения могут использоваться локальное хранилище браузера, кэш и технологии PWA. Это необходимо для сохранения введённых данных и работы приложения без подключения к интернету.</p>
+  <h2>3. Реклама и сторонние сервисы</h2>
+  <p>В приложении могут использоваться сторонние рекламные и аналитические сервисы. Такие сервисы могут обрабатывать техническую информацию об устройстве и использовании приложения в соответствии со своими правилами и применимым законодательством. Перечень подключённых сервисов и условия обработки данных будут актуализироваться при их подключении.</p>
+  <h2>4. Передача данных</h2>
+  <p>Разработчик не продаёт введённые пользователем данные. Передача информации третьим лицам допускается только в случаях, необходимых для работы подключённых сервисов или предусмотренных законодательством.</p>
+  <h2>5. Защита и удаление данных</h2>
+  <p>Пользователь самостоятельно контролирует данные, сохранённые локально на его устройстве. Удаление данных приложения или данных сайта на устройстве может привести к удалению локально сохранённой информации.</p>
+  <h2>6. Изменения политики</h2>
+  <p>Политика может обновляться при изменении функциональности приложения, состава подключённых сервисов или требований законодательства. Актуальная версия публикуется на этой странице.</p>
+  <h2>7. Контакты</h2>
+  <p>По вопросам конфиденциальности: <a href="mailto:support@rabocheevremya.ru" style="color:#378cff">support@rabocheevremya.ru</a>.</p>
+  <p><small>Дата обновления: 26 сентября 2026 г.</small></p>
+</section>
+<script>
+(function(){
+  var path=(location.pathname||'/').replace(/\/+$/,'') || '/';
+  if(path==='/privacy'){
+    var app=document.querySelector('.app');
+    var gate=document.getElementById('installGate');
+    var privacy=document.getElementById('privacyPolicyPage');
+    if(app) app.style.display='none';
+    if(gate) gate.style.display='none';
+    if(privacy) privacy.style.display='block';
+    document.title='Политика конфиденциальности — Рабочее время';
+  }
+})();
+</script>
+
+</body></html>
