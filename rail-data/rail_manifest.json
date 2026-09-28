@@ -5,11 +5,22 @@
   "country": "RU",
   "coordinate_system": "WGS84",
   "picket_length_m": 100,
+  "coverage": [
+    "Дальневосточный федеральный округ",
+    "Сибирский федеральный округ"
+  ],
   "regions": [
     {
       "id": "ru_far_east",
       "name": "Дальневосточный федеральный округ",
       "file": "ru_far_east.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_siberia",
+      "name": "Сибирский федеральный округ",
+      "file": "ru_siberia.json",
       "status": "beta",
       "source": "OpenStreetMap / Geofabrik"
     }
