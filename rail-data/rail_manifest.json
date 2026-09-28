@@ -1,0 +1,17 @@
+{
+  "schema": "rabocheevremya.rail-data",
+  "version": 2,
+  "status": "beta",
+  "country": "RU",
+  "coordinate_system": "WGS84",
+  "picket_length_m": 100,
+  "regions": [
+    {
+      "id": "ru_far_east",
+      "name": "Дальневосточный федеральный округ",
+      "file": "ru_far_east.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    }
+  ]
+}
