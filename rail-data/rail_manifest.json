@@ -1,13 +1,19 @@
 {
   "schema": "rabocheevremya.rail-data",
-  "version": 2,
+  "version": 3,
   "status": "beta",
   "country": "RU",
   "coordinate_system": "WGS84",
   "picket_length_m": 100,
   "coverage": [
     "Дальневосточный федеральный округ",
-    "Сибирский федеральный округ"
+    "Сибирский федеральный округ",
+    "Центральный федеральный округ",
+    "Северо-Западный федеральный округ",
+    "Южный федеральный округ",
+    "Северо-Кавказский федеральный округ",
+    "Приволжский федеральный округ",
+    "Уральский федеральный округ"
   ],
   "regions": [
     {
@@ -21,6 +27,48 @@
       "id": "ru_siberia",
       "name": "Сибирский федеральный округ",
       "file": "ru_siberia.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_central",
+      "name": "Центральный федеральный округ",
+      "file": "ru_central.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_northwest",
+      "name": "Северо-Западный федеральный округ",
+      "file": "ru_northwest.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_south",
+      "name": "Южный федеральный округ",
+      "file": "ru_south.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_north_caucasus",
+      "name": "Северо-Кавказский федеральный округ",
+      "file": "ru_north_caucasus.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_volga",
+      "name": "Приволжский федеральный округ",
+      "file": "ru_volga.json",
+      "status": "beta",
+      "source": "OpenStreetMap / Geofabrik"
+    },
+    {
+      "id": "ru_ural",
+      "name": "Уральский федеральный округ",
+      "file": "ru_ural.json",
       "status": "beta",
       "source": "OpenStreetMap / Geofabrik"
     }
