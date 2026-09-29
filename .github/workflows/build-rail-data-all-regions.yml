@@ -1,0 +1,154 @@
+name: Build Rail Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 2 1 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-rail-data
+  cancel-in-progress: false
+
+jobs:
+  build-region:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include:
+          - id: ru_far_east
+            extract: far-eastern-fed-district
+          - id: ru_siberia
+            extract: siberian-fed-district
+          - id: ru_central
+            extract: central-fed-district
+          - id: ru_northwest
+            extract: northwestern-fed-district
+          - id: ru_south
+            extract: south-fed-district
+          - id: ru_north_caucasus
+            extract: north-caucasus-fed-district
+          - id: ru_volga
+            extract: volga-fed-district
+          - id: ru_ural
+            extract: ural-fed-district
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: python -m pip install osmium
+
+      - name: Download OSM extract
+        env:
+          EXTRACT: ${{ matrix.extract }}
+        run: |
+          curl -L --fail --retry 5 --retry-delay 10 \
+            -o region.osm.pbf \
+            "https://download.geofabrik.de/russia/${EXTRACT}-latest.osm.pbf"
+
+      - name: Build regional rail data
+        env:
+          REGION_ID: ${{ matrix.id }}
+        run: |
+          mkdir -p rail-data
+          python tools/build_rail_data_v1.py \
+            region.osm.pbf "rail-data/${REGION_ID}.json"
+          rm -f region.osm.pbf
+
+      - name: Check generated database
+        env:
+          REGION_ID: ${{ matrix.id }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          region = os.environ['REGION_ID']
+          db = json.loads(Path(f'rail-data/{region}.json').read_text(encoding='utf-8'))
+          ways = db.get('ways', [])
+          marks = [m for m in db.get('milestones', []) if isinstance(m.get('position_km'), (int, float))]
+          assert db.get('schema') == 'rabocheevremya.rail-data', region
+          assert db.get('coordinate_system') == 'WGS84', region
+          assert len(ways) > 0 and len(marks) >= 2, f'{region}: no usable railway or kilometre marks'
+          print(f'{region}: {len(ways)} ways, {len(marks)} positioned marks')
+          PY
+
+      - name: Store generated database for publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: rail-region-${{ matrix.id }}
+          path: rail-data/${{ matrix.id }}.json
+          if-no-files-found: error
+          retention-days: 2
+
+  publish:
+    needs: build-region
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Collect all generated databases
+        uses: actions/download-artifact@v4
+        with:
+          pattern: rail-region-*
+          path: rail-data
+          merge-multiple: true
+
+      - name: Update rail manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          entries = [
+              ('ru_far_east', 'Дальневосточный федеральный округ'),
+              ('ru_siberia', 'Сибирский федеральный округ'),
+              ('ru_central', 'Центральный федеральный округ'),
+              ('ru_northwest', 'Северо-Западный федеральный округ'),
+              ('ru_south', 'Южный федеральный округ'),
+              ('ru_north_caucasus', 'Северо-Кавказский федеральный округ'),
+              ('ru_volga', 'Приволжский федеральный округ'),
+              ('ru_ural', 'Уральский федеральный округ'),
+          ]
+          for region, _ in entries:
+              assert Path(f'rail-data/{region}.json').is_file(), f'Missing {region}'
+
+          path = Path('rail-data/rail_manifest.json')
+          old = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
+          manifest = {
+              'schema': 'rabocheevremya.rail-data',
+              'version': int(old.get('version', 0)) + 1,
+              'status': 'beta',
+              'country': 'RU',
+              'coordinate_system': 'WGS84',
+              'picket_length_m': 100,
+              'coverage': [name for _, name in entries],
+              'regions': [
+                  {'id': region, 'name': name, 'file': f'{region}.json',
+                   'status': 'beta', 'source': 'OpenStreetMap / Geofabrik'}
+                  for region, name in entries
+              ],
+          }
+          path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding='utf-8')
+          PY
+
+      - name: Commit generated databases
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rail-data/rail_manifest.json rail-data/ru_*.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Update rail data for eight federal districts"
+            git push
+          fi
