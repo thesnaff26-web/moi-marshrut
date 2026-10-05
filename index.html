@@ -609,7 +609,7 @@ body.light .liveTimerValue{color:#078451}
 #installGate .installGuideCallout strong{font-size:18px}
 #installGate .installGuideCallout p{line-height:1.4;color:#a9bac9;margin:10px 0 16px}
 #installGate .installGuideCallout a{display:block;padding:15px;border-radius:12px;background:#ff152b;text-align:center;color:#fff;font-weight:700;text-decoration:none}
-#installGate #installGuideLink{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#installGate #installGuideLink{touch-action:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1779,18 +1779,22 @@ document.addEventListener('gestureend',function(e){e.preventDefault()},{passive:
   if(!/Android/i.test(navigator.userAgent))return;
   const link=document.getElementById('installGuideLink');
   if(!link)return;
-  let startX=0,startY=0;
-  link.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1)return;
-    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
-  },{passive:true});
-  link.addEventListener('touchend',function(e){
-    if(e.changedTouches.length!==1)return;
-    const touch=e.changedTouches[0];
-    if(Math.abs(touch.clientX-startX)>12||Math.abs(touch.clientY-startY)>12)return;
+  let startX=0,startY=0,opening=false;
+  link.addEventListener('pointerdown',function(e){
+    if(e.pointerType!=='touch')return;
+    startX=e.clientX;startY=e.clientY;
+  });
+  link.addEventListener('pointerup',function(e){
+    if(e.pointerType!=='touch'||opening)return;
+    if(Math.abs(e.clientX-startX)>15||Math.abs(e.clientY-startY)>15)return;
+    opening=true;
     e.preventDefault();
-    location.assign(link.href);
-  },{passive:false});
+    location.href=link.href;
+  });
+  link.addEventListener('click',function(e){
+    if(!opening)return;
+    e.preventDefault();
+  });
 })();
 </script>
 
