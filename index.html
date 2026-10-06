@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Рабочее время">
 <link rel="manifest" href="./manifest.json">
+<!-- Adlook: ускоряем соединение при запуске рекламного блока -->
+<link rel="preconnect" href="https://s.adlook.tv">
 <!-- Версия 1.2.10: таймер работы и отдыха -->
 <title>Рабочее время</title>
 <!-- Yandex.Metrika counter -->
@@ -567,6 +569,11 @@ nav b{
 </style>
 
 
+<style id="adlook-home-style">
+/* Поезд остаётся подложкой, в том числе без сети и при отсутствии объявления. */
+.hero:has(#Adlk-mob){height:auto!important;aspect-ratio:16/9!important;min-height:235px}
+@media (min-width:950px){.adlook-mob-wrapper{display:none!important}}
+</style>
 <style id="v35-11-day-night-hero">
 /* Светлая тема = день, тёмная тема = ночь */
 .hero{background-image:url("home-night.jpg")!important}
@@ -650,7 +657,13 @@ body.light .liveTimerValue{color:#078451}
 <div id="browserInstallBanner"><b>Установите приложение на экран Домой</b><p>Для постоянного использования откройте его с иконки. Записи в браузере хранятся отдельно от установленной версии.</p><button type="button" onclick="showInstallInstructions()">Показать инструкцию установки</button></div>
 <main>
 <section id="home" class="view active">
-<div class="hero"><div class="heroRail"></div></div>
+<div class="hero" aria-label="Рекламное место или изображение поезда">
+<!-- ===== Adlook: начало рекламного места «Главная» ===== -->
+<div class="adlook-mob-wrapper" style="width: 100%; padding: 5px; box-sizing: border-box; min-height: 235px;">
+  <div id="Adlk-mob"></div>
+</div>
+<!-- ===== Adlook: конец рекламного места «Главная» ===== -->
+</div>
 <div class="month"><button onclick="monthMove(-1)">‹</button><b class="monthName"></b><button onclick="monthMove(1)">›</button></div>
 <div class="card"><div class="metrics3">
 <div class="metric"><div class="ico">🕒</div><div class="k">Отработано</div><div class="v" id="worked">0 ч 00 мин</div></div>
@@ -738,6 +751,7 @@ function openBrowserApp(){
   try { sessionStorage.setItem('rwBrowserOpen','1'); } catch (_) {}
   const gate=document.getElementById('installGate');
   if(gate){gate.classList.remove('show');gate.setAttribute('aria-hidden','true')}
+  startAdlookHome();
 }
 function showInstallInstructions(){
   try { sessionStorage.removeItem('rwBrowserOpen'); } catch (_) {}
@@ -799,7 +813,7 @@ if ('serviceWorker' in navigator && isStandaloneApp()) {
   });
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('./service-worker.js?v=1026', { updateViaCache: 'none' });
+      const registration = await navigator.serviceWorker.register('./service-worker.js?v=1027', { updateViaCache: 'none' });
       const checkUpdate = () => {
         if (navigator.onLine !== false) registration.update().catch(() => {});
         applyPendingUpdate();
@@ -1036,7 +1050,7 @@ function routeTouchesDay(r,k){
 function renderCalendar(){let y=viewDate.getFullYear(),m=viewDate.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0),start=(first.getDay()+6)%7,h='';for(let i=0;i<start;i++)h+='<div></div>';for(let d=1;d<=last.getDate();d++){let date=new Date(y,m,d),k=y+'-'+pad(m+1)+'-'+pad(d),cls=['day'];if(k===dk(new Date()))cls.push('today');if(isFederalHolidayDate(date))cls.push('holiday');if(state.routes.some(r=>routeTouchesDay(r,k)))cls.push('routeDay');let ev=state.events.find(e=>k>=e.start&&k<=e.end);if(ev)cls.push(ev.type);h+=`<div class="${cls.join(' ')}" onclick="openEvent('${k}')">${d}</div>`}cal.innerHTML=h;renderHolidayInfo(y,m)}
 function renderHolidayInfo(y,m){let items=[];for(let d=1;d<=new Date(y,m+1,0).getDate();d++){let date=new Date(y,m,d),md=pad(m+1)+'-'+pad(d);if(isFederalHolidayDate(date))items.push({d,name:federalHolidayNames[md]||'Праздничный день'})}let box=document.getElementById('holidayInfo');if(!box)return;box.innerHTML='<div class="holidayInfoTitle">Праздники в этом месяце</div>'+(items.length?items.map(x=>`<div class="holidayInfoItem"><b>${x.d} ${monthNames[m].toLowerCase()}</b> — ${x.name}</div>`).join(''):'<div class="holidayInfoEmpty">В этом месяце праздничных дней нет.</div>')}
 function renderEvents(){let names={sick:'Больничный',unpaid:'Без содержания',off:'Выходной'},y=viewDate.getFullYear(),m=viewDate.getMonth(),first=y+'-'+pad(m+1)+'-01',last=y+'-'+pad(m+1)+'-'+pad(new Date(y,m+1,0).getDate());eventList.innerHTML=state.events.filter(e=>e.start<=last&&e.end>=first).slice().reverse().map(e=>`<div class="route" onclick="editEvent('${e.id}')"><div class="routeTop"><h3>${names[e.type]||'Событие'}</h3><span class="tag">${e.start} — ${e.end}</span></div><p>Нажмите, чтобы изменить или удалить.</p></div>`).join('')}
-function showView(id,n){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',i===n));pageTitle.textContent=id==='home'?'Рабочее время':({routes:'Маршруты',calendar:'Календарь',stats:'Статистика',settings:'Настройки'}[id]);render()}
+function showView(id,n){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',i===n));pageTitle.textContent=id==='home'?'Рабочее время':({routes:'Маршруты',calendar:'Календарь',stats:'Статистика',settings:'Настройки'}[id]);render();if(id==='home')startAdlookHome()}
 function monthMove(n){viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+n,1);render()}
 function setLegCount(n){
  window.currentLegCount=[1,2,3].includes(n)?n:2;
@@ -1797,5 +1811,41 @@ document.addEventListener('gestureend',function(e){e.preventDefault()},{passive:
   });
 })();
 </script>
+
+
+<!-- ===== Adlook: начало общего кода, один запуск для главной ===== -->
+<script id="adlook-home-loader">
+(function(){
+  let started=false;
+  function addScript(url, attrs, onload){
+    const script=document.createElement('script');
+    script.src=url;
+    Object.entries(attrs).forEach(([name,value])=>script.setAttribute(name,value));
+    if(onload)script.onload=onload;
+    document.body.appendChild(script);
+  }
+  window.startAdlookHome=function(){
+    if(started || navigator.onLine===false || window.innerWidth>=950)return;
+    const gate=document.getElementById('installGate');
+    const home=document.getElementById('home');
+    if(!home || !home.classList.contains('active') || (gate && gate.classList.contains('show')))return;
+    started=true;
+    // Adlook: скрипт блока Adlk-mob; ядро загружается один раз после него.
+    addScript('https://s.adlook.tv/vast-player/production/adlkPlayerInit.js',{
+      'data-set-id':'db2bi97aimjs739t6qdg',
+      'data-host':'Adlk-mob',
+      'data-target':'mob'
+    },function(){
+      addScript('https://s.adlook.tv/vast-player/production/adLookInit.js',{
+        'data-delay-pc':'200',
+        'data-delay-mob':'300'
+      });
+    });
+  };
+  window.addEventListener('online',window.startAdlookHome);
+  window.startAdlookHome();
+})();
+</script>
+<!-- ===== Adlook: конец общего кода ===== -->
 
 </body></html>
