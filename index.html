@@ -965,7 +965,7 @@ function calc(){
    if(passengerLeg)pass+=(passengerLeg[1]-passengerLeg[0])/60000;
   }
  }
- worked+=pass+hh;
+ worked+=pass; // Праздничные часы — отдельный показатель, уже включённый в отработанное время.
  const sick=state.events.filter(e=>e.type==='sick').reduce((a,e)=>a+daysOverlap(e,y,m),0),unpaid=state.events.filter(e=>e.type==='unpaid').reduce((a,e)=>a+daysOverlap(e,y,m),0),off=state.events.filter(e=>e.type==='off').reduce((a,e)=>a+daysOverlap(e,y,m),0);
  return{worked,ng,pass,hh,sick,unpaid,off,trips:rs.filter(complete).length,norm:monthNorm(y,m),today:normToday(y,m)};
 }
