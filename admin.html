@@ -2,7 +2,7 @@
 <style>*{box-sizing:border-box}body{margin:0;background:#06111b;color:#f7fafc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:560px;margin:auto;padding:calc(env(safe-area-inset-top) + 20px) 14px 40px}h1{margin:0}.muted{color:#91a6b7}.card{background:#0b1c2a;border:1px solid #203b50;border-radius:20px;padding:15px;margin-top:12px}input,button{width:100%;padding:14px;border-radius:14px;font-size:16px;margin-top:10px}input{background:#102638;color:white;border:1px solid #203b50}button{border:0;font-weight:700;background:#378cff;color:white}.danger{background:#501a23}.allow{background:#12412e}.hidden{display:none}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stat{text-align:center;background:#0b1c2a;border:1px solid #203b50;border-radius:16px;padding:12px 4px}.n{font-size:24px;font-weight:800}.lbl{font-size:10px;color:#91a6b7}.row{display:flex;justify-content:space-between;gap:8px;align-items:center}.badge{font-size:12px;font-weight:700}.device{color:#91a6b7;font-size:14px;margin-top:4px;font-weight:600}.meta{color:#91a6b7;font-size:13px;line-height:1.6;margin-top:8px;word-break:break-all}#logout{width:auto;padding:9px 12px;margin:0;background:#102638}.stat{cursor:pointer;user-select:none}.stat.selected{background:#12344d;border-color:#378cff;box-shadow:0 0 0 1px #378cff inset}.searchWrap{margin-top:12px}.searchWrap input{margin-top:0;font-size:16px}.empty{padding:18px;text-align:center}</style></head><body><main>
 <div class="row"><div><h1>Рабочее время</h1><div class="muted">Панель администратора</div></div><button id="logout" class="hidden">Выйти</button></div>
 <section id="login" class="card"><b>Вход администратора</b><input id="email" type="email" value="thesnaff260799@mail.ru" autocomplete="username"><input id="password" type="password" placeholder="Пароль" autocomplete="current-password"><button id="loginBtn">Войти</button><div id="msg" class="muted" style="margin-top:10px"></div></section>
-<section id="panel" class="hidden"><div class="stats"><div class="stat selected" data-filter="all"><div id="total" class="n">0</div><div class="lbl">ВСЕГО</div></div><div class="stat" data-filter="active"><div id="active" class="n">0</div><div class="lbl">АКТИВНЫХ</div></div><div class="stat" data-filter="blocked"><div id="blocked" class="n">0</div><div class="lbl">БЛОК</div></div></div><div class="searchWrap"><input id="userSearch" type="search" placeholder="🔎 Поиск пользователя" autocomplete="off" autocorrect="off" spellcheck="false"></div><button id="refresh">Обновить</button><div id="devices"></div></section>
+<section id="panel" class="hidden"><div class="stats"><div class="stat selected" data-filter="all"><div id="total" class="n">0</div><div class="lbl">ВСЕГО</div></div><div class="stat" data-filter="active"><div id="active" class="n">0</div><div class="lbl">АКТИВНЫХ</div></div><div class="stat" data-filter="blocked"><div id="blocked" class="n">0</div><div class="lbl">БЛОК</div></div></div><div class="searchWrap"><input id="userSearch" type="search" placeholder="🔎 Поиск пользователя" autocomplete="off" autocorrect="off" spellcheck="false"></div><button id="refresh">Обновить</button><div id="pendingClaims"></div><div id="devices"></div></section>
 </main><script>
 const U='https://pwhryvpmjwlfysprdndr.supabase.co',K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc',S='rv_admin_session_v1';
 const $=id=>document.getElementById(id);
@@ -21,7 +21,29 @@ function renderDevices(){
  box.querySelectorAll('button[data-id][data-v]').forEach(b=>b.onclick=async()=>{const willActivate=b.dataset.v==='1',name=b.dataset.name||'пользователя';if(!confirm(`${willActivate?'Разблокировать':'Заблокировать'} пользователя «${name}»?`))return;b.disabled=true;try{await rpc('admin_set_device_active',{p_device_id:b.dataset.id,p_active:willActivate});await load()}catch(e){alert(e.message);b.disabled=false}});
  box.querySelectorAll('button[data-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Удалить это устройство? Оно исчезнет из панели администратора.'))return;b.disabled=true;try{await rpc('admin_delete_device',{p_device_id:b.dataset.delete});await load()}catch(e){alert(e.message);b.disabled=false}})
 }
-async function load(){let box=$('devices');box.innerHTML='<div class="card muted">Загрузка…</div>';try{let d=await rpc('admin_list_devices');d=Array.isArray(d)?d:[];let st=[];try{st=await rpc('admin_get_device_stats');st=Array.isArray(st)?st:[]}catch(_){};const sm=new Map(st.map(x=>[x.device_id,x]));allDevices=d.map(x=>Object.assign({},x,sm.get(x.device_id)||{}));$('total').textContent=allDevices.length;$('active').textContent=allDevices.filter(x=>x.active).length;$('blocked').textContent=allDevices.filter(x=>!x.active).length;renderDevices()}catch(e){box.innerHTML='<div class="card">Ошибка: '+esc(e.message)+'</div>'}}
+async function renderPendingClaims(){
+ const box=$('pendingClaims');
+ try{
+  const list=await rpc('rw_admin_list_stats_claims');
+  box.innerHTML=(Array.isArray(list)&&list.length)
+   ?'<div class="card"><b>🔐 Запросы восстановления старых установок</b><p class="muted">Подтверждайте только владельцев, которых проверили отдельно. ID и имя сами по себе не доказывают владение.</p></div>'+
+    list.map(x=>'<div class="card"><b>'+esc(x.owner_name||'Без имени')+'</b><div class="meta">Устройство: '+esc(x.device_id)+'<br>Запрос: '+esc(fmt(x.claimed_at))+'</div><button data-claim-device="'+esc(x.device_id)+'" data-claim-user="'+esc(x.claimant_id)+'">Проверить и восстановить</button></div>').join('')
+   :'';
+  box.querySelectorAll('button[data-claim-device]').forEach(b=>b.onclick=async()=>{
+   const id=b.dataset.claimDevice,uid=b.dataset.claimUser;
+   if(!confirm('Подтверждение строго после независимой проверки владельца. ID устройства: '+id+'\\n\\nВы действительно проверили владельца?'))return;
+   const phrase=prompt('Введите ПОДТВЕРЖДАЮ, если владельца проверили другим способом.');
+   if(phrase!=='ПОДТВЕРЖДАЮ')return;
+   b.disabled=true;
+   try{
+    await rpc('rw_admin_approve_stats_claim',{p_device_id:id,p_claimant_id:uid});
+    alert('Серверная привязка обновлена. Статистика придёт при следующем входе с интернетом.');
+    await load();
+   }catch(e){alert(e.message);b.disabled=false;}
+  });
+ }catch(e){box.innerHTML='<div class="card muted">Не удалось загрузить запросы восстановления: '+esc(e.message)+'</div>';}
+}
+async function load(){let box=$('devices');box.innerHTML='<div class="card muted">Загрузка…</div>';try{let d=await rpc('admin_list_devices');d=Array.isArray(d)?d:[];let st=[];try{st=await rpc('admin_get_device_stats');st=Array.isArray(st)?st:[]}catch(_){};const sm=new Map(st.map(x=>[x.device_id,x]));allDevices=d.map(x=>Object.assign({},x,sm.get(x.device_id)||{}));$('total').textContent=allDevices.length;$('active').textContent=allDevices.filter(x=>x.active).length;$('blocked').textContent=allDevices.filter(x=>!x.active).length;renderDevices();await renderPendingClaims()}catch(e){box.innerHTML='<div class="card">Ошибка: '+esc(e.message)+'</div>'}}
 document.querySelectorAll('.stat[data-filter]').forEach(el=>el.onclick=()=>{currentFilter=el.dataset.filter;document.querySelectorAll('.stat[data-filter]').forEach(x=>x.classList.toggle('selected',x===el));renderDevices()});
 $('userSearch').oninput=renderDevices;
 $('loginBtn').onclick=login;$('password').onkeydown=e=>{if(e.key==='Enter')login()};$('refresh').onclick=load;$('logout').onclick=()=>{localStorage.removeItem(S);view(false)};if(ses()?.access_token){view(true);load()}else view(false);
