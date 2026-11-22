@@ -698,7 +698,7 @@ body.light .liveTimerValue{color:#078451}
 <div class="card"><div class="setting"><b>Часовой пояс</b><p class="note">Явка и полная сдача вводятся по московскому времени. Ночные часы рассчитываются по местному времени.</p><div class="radioRow"><button class="chip" id="tzAuto" onclick="setTZ('auto')">Автоматически</button><button class="chip" id="tzManual" onclick="setTZ('manual')">Вручную</button></div><div id="tzManualBox" style="display:none"><label>Смещение относительно МСК</label><select id="tzOffset" onchange="saveSettings()"></select></div></div>
 <div class="setting"><b>Оформление</b><div class="radioRow" style="margin-top:9px"><button class="chip" data-theme="light" onclick="setTheme('light')">Светлая</button><button class="chip" data-theme="dark" onclick="setTheme('dark')">Тёмная</button><button class="chip" data-theme="auto" onclick="setTheme('auto')">Автоматически</button></div><p class="note">В автоматическом режиме приложение старается переключать тему после заката/восхода. Если геопозиция недоступна — используется тема iPhone.</p></div>
 <div class="setting"><b>Резервная копия</b><p class="note" id="backupStatus">Автокопия создаётся на этом устройстве после каждого изменения.</p><button class="btn ghost" onclick="exportData()">Скачать резервную копию</button><label class="btn ghost" style="display:block;text-align:center;margin-top:8px">Восстановить из файла<input type="file" accept="application/json" onchange="importData(this)" style="display:none"></label></div>
-<div class="setting"><b>Работа офлайн</b><p class="note">Маршруты и события хранятся на устройстве. После обновления service-worker приложение продолжит открываться без сети.</p></div><div class="setting" id="browserInstallLink" style="display:none"><b>Установить приложение</b><p class="note">Откройте инструкцию для вашего телефона.</p><button class="btn ghost" type="button" onclick="showInstallInstructions()">Как установить</button></div><div class="setting"><b>Конфиденциальность</b><p class="note">Информация об обработке и хранении данных.</p><button class="btn ghost" type="button" onclick="openPrivacyPolicy()">🔒 Политика конфиденциальности</button></div><div class="appVersion" aria-label="Версия приложения 1.2.8">Версия 1.2.12</div></div></section>
+<div class="setting"><b>Работа офлайн</b><p class="note">Маршруты и события хранятся на устройстве. После обновления service-worker приложение продолжит открываться без сети.</p></div><div class="setting" id="browserInstallLink" style="display:none"><b>Установить приложение</b><p class="note">Откройте инструкцию для вашего телефона.</p><button class="btn ghost" type="button" onclick="showInstallInstructions()">Как установить</button></div><div class="setting"><b>Конфиденциальность</b><p class="note">Информация об обработке и хранении данных.</p><button class="btn ghost" type="button" onclick="openPrivacyPolicy()">🔒 Политика конфиденциальности</button></div><div class="appVersion" aria-label="Версия приложения 1.2.8">Версия 1.2.13</div></div></section>
 </main>
 
 <nav><button class="active" onclick="showView('home',0)"><b>⌂</b>Главная</button><button onclick="showView('routes',1)"><b>🚆</b>Маршруты</button><button onclick="showView('calendar',2)"><b>▣</b>Календарь</button><button onclick="showView('stats',3)"><b>▥</b>Статистика</button><button onclick="showView('settings',4)"><b>•••</b>Ещё</button></nav>
@@ -1404,7 +1404,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortra
       });
       const txt=await r.text();
       let data={}; try{data=txt?JSON.parse(txt):{}}catch(_){data={message:txt}}
-      if(!r.ok)throw new Error('auth '+path+': '+r.status+' '+(data.msg||data.message||txt));
+      if(!r.ok){const e=new Error('auth '+path+': '+r.status+' '+(data.msg||data.message||txt));e.status=r.status;throw e;}
       return data;
     }finally{clearTimeout(timer)}
   }
@@ -1412,25 +1412,21 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortra
   async function ensureAuth(){
     const token=localStorage.getItem(AUTH_ACCESS_KEY);
     const expires=Number(localStorage.getItem(AUTH_EXPIRES_KEY)||0);
-    if(token && expires>Date.now()+60000)return token;
-
+    if(token&&expires>Date.now()+60000)return token;
+    const registered=!!localStorage.getItem(DEVICE_KEY)&&localStorage.getItem(ACCESS_KEY)==='1';
     const refresh=localStorage.getItem(AUTH_REFRESH_KEY);
     if(refresh){
       try{return saveAuthSession(await authRequest('token?grant_type=refresh_token',{refresh_token:refresh}))}
       catch(e){
-        // Preserve the installation's anonymous account on a failed refresh.
-        // Signing up again changes auth.uid() while devices.user_id still points
-        // to the original user, breaking owner-checked admin statistics.
-        // Keep the refresh token for a later retry and never silently rebind.
-        throw e;
+        // Never create a replacement identity on a timeout or server outage.
+        if(!registered||![400,401].includes(Number(e.status)))throw e;
+        // A new anonymous login is NOT device ownership. The server will
+        // require a private installation proof, or an admin-reviewed legacy claim.
+        return saveAuthSession(await authRequest('signup',{}));
       }
     }
-
-    // A registered installation must never be silently assigned a new owner.
-    // This requires an explicitly verified recovery flow, not a fresh signup.
-    if(localStorage.getItem(DEVICE_KEY)&&localStorage.getItem(ACCESS_KEY)==='1'){
-      throw new Error('Device session missing; owner recovery required');
-    }
+    // The old device stays registered; a fresh session has no ownership until
+    // proof verification or admin approval. No local routes are modified.
     return saveAuthSession(await authRequest('signup',{}));
   }
 
@@ -1581,23 +1577,51 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortra
 
   // v35.29 — синхронизация только сводной статистики для админ-панели.
   // Маршруты и события по-прежнему остаются только на устройстве.
+  const INSTALL_STATS_PROOF_KEY='rv_stats_installation_proof_v1';
+  let lastLegacyClaimAttempt=0;
   async function syncAdminStats(deviceId){
     try{
-      const now=new Date(), oldView=viewDate;
-      viewDate=new Date(now.getFullYear(),now.getMonth(),1);
-      const c=calc();
-      viewDate=oldView;
-      await rpc('update_device_stats',{
+      const now=new Date(),oldView=viewDate;
+      let c;
+      try{
+        viewDate=new Date(now.getFullYear(),now.getMonth(),1);
+        c=calc();
+      }finally{viewDate=oldView}
+      const payload={
         p_device_id:deviceId,
         p_worked_minutes:Math.round(c.worked||0),
         p_night_minutes:Math.round(c.ng||0),
         p_passenger_minutes:Math.round(c.pass||0),
         p_holiday_minutes:Math.round(c.hh||0),
         p_trip_count:Number(c.trips||0)
-      });
-    }catch(e){
-      console.warn('Stats sync skipped',e);
-    }
+      };
+      let proof=localStorage.getItem(INSTALL_STATS_PROOF_KEY);
+      if(!proof){
+        try{
+          const issued=await rpc('rw_stats_provision_installation',{p_device_id:deviceId});
+          if(typeof issued==='string'&&/^[a-f0-9]{64}$/.test(issued)){
+            localStorage.setItem(INSTALL_STATS_PROOF_KEY,issued);
+            proof=issued;
+          }
+        }catch(e){
+          // Existing older installation may have switched anonymous sessions.
+          // Only an administrator can approve re-binding. This request is silent.
+          if(![400,401,403].includes(Number(e.status))&&!/owner mismatch/i.test(String(e.message)))throw e;
+          if(Date.now()-lastLegacyClaimAttempt>600000){
+            lastLegacyClaimAttempt=Date.now();
+            await rpc('rw_stats_request_legacy_claim',{p_device_id:deviceId});
+          }
+          return;
+        }
+        if(!proof){
+          // Proof already provisioned for this installation but missing locally:
+          // do not rotate or replace it without an authenticated recovery.
+          console.warn('Installation proof exists but is missing on this device');
+          return;
+        }
+      }
+      await rpc('rw_stats_update_with_proof',{...payload,p_secret:proof});
+    }catch(e){console.warn('Stats sync pending',e)}
   }
 
   window.rvSyncAdminStats=()=>syncAdminStats(getDeviceId());
