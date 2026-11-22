@@ -1,4 +1,4 @@
-const CACHE = 'rabochee-vremya-v26';
+const CACHE = 'rabochee-vremya-v27';
 const PREFIX = 'rabochee-vremya-v';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 const INDEX = './index.html';
