@@ -831,7 +831,7 @@ if ('serviceWorker' in navigator && isStandaloneApp()) {
   });
   window.addEventListener('route-editor-closed', applyPendingUpdate);
 }
-const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
+const KEY='moiMarshrut';
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
 if(!state||typeof state!=='object'){
@@ -1872,7 +1872,7 @@ document.addEventListener('gestureend',function(e){e.preventDefault()},{passive:
 (function(){
  'use strict';
  const BASE='https://pwhryvpmjwlfysprdndr.supabase.co';
- const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiInN1cGFiYXNlIiwicmVmIjoicHdocnl2cG1qd2xmeXNwcmRuZHIiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc5MDEyMjIzMSwiZXhwIjoyMTA1Njk4MjMxIn0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
+ const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
  const ACCESS='rv_sb_access_token_v1',REFRESH='rv_sb_refresh_token_v1',EXP='rv_sb_expires_at_v1';
  const out=()=>document.getElementById('statsRecoveryOutput');
  async function auth(path,body){
