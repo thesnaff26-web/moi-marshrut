@@ -698,8 +698,7 @@ body.light .liveTimerValue{color:#078451}
 <div class="card"><div class="setting"><b>Часовой пояс</b><p class="note">Явка и полная сдача вводятся по московскому времени. Ночные часы рассчитываются по местному времени.</p><div class="radioRow"><button class="chip" id="tzAuto" onclick="setTZ('auto')">Автоматически</button><button class="chip" id="tzManual" onclick="setTZ('manual')">Вручную</button></div><div id="tzManualBox" style="display:none"><label>Смещение относительно МСК</label><select id="tzOffset" onchange="saveSettings()"></select></div></div>
 <div class="setting"><b>Оформление</b><div class="radioRow" style="margin-top:9px"><button class="chip" data-theme="light" onclick="setTheme('light')">Светлая</button><button class="chip" data-theme="dark" onclick="setTheme('dark')">Тёмная</button><button class="chip" data-theme="auto" onclick="setTheme('auto')">Автоматически</button></div><p class="note">В автоматическом режиме приложение старается переключать тему после заката/восхода. Если геопозиция недоступна — используется тема iPhone.</p></div>
 <div class="setting"><b>Резервная копия</b><p class="note" id="backupStatus">Автокопия создаётся на этом устройстве после каждого изменения.</p><button class="btn ghost" onclick="exportData()">Скачать резервную копию</button><label class="btn ghost" style="display:block;text-align:center;margin-top:8px">Восстановить из файла<input type="file" accept="application/json" onchange="importData(this)" style="display:none"></label></div>
-<div class="setting"><b>Синхронизация с админкой</b><p class="note">Если статистика перестала обновляться, восстановите привязку установки. Маршруты останутся на телефоне.</p><button class="btn ghost" type="button" id="recoverStatsBtn" onclick="rvRequestStatsRecovery()">Восстановить синхронизацию</button><div id="statsRecoveryOutput" class="note" style="margin-top:10px;word-break:break-word" aria-live="polite"></div></div>
-<div class="setting"><b>Работа офлайн</b><p class="note">Маршруты и события хранятся на устройстве. После обновления service-worker приложение продолжит открываться без сети.</p></div><div class="setting" id="browserInstallLink" style="display:none"><b>Установить приложение</b><p class="note">Откройте инструкцию для вашего телефона.</p><button class="btn ghost" type="button" onclick="showInstallInstructions()">Как установить</button></div><div class="setting"><b>Конфиденциальность</b><p class="note">Информация об обработке и хранении данных.</p><button class="btn ghost" type="button" onclick="openPrivacyPolicy()">🔒 Политика конфиденциальности</button></div><div class="appVersion" aria-label="Версия приложения 1.2.8">Версия 1.2.11</div></div></section>
+<div class="setting"><b>Работа офлайн</b><p class="note">Маршруты и события хранятся на устройстве. После обновления service-worker приложение продолжит открываться без сети.</p></div><div class="setting" id="browserInstallLink" style="display:none"><b>Установить приложение</b><p class="note">Откройте инструкцию для вашего телефона.</p><button class="btn ghost" type="button" onclick="showInstallInstructions()">Как установить</button></div><div class="setting"><b>Конфиденциальность</b><p class="note">Информация об обработке и хранении данных.</p><button class="btn ghost" type="button" onclick="openPrivacyPolicy()">🔒 Политика конфиденциальности</button></div><div class="appVersion" aria-label="Версия приложения 1.2.8">Версия 1.2.12</div></div></section>
 </main>
 
 <nav><button class="active" onclick="showView('home',0)"><b>⌂</b>Главная</button><button onclick="showView('routes',1)"><b>🚆</b>Маршруты</button><button onclick="showView('calendar',2)"><b>▣</b>Календарь</button><button onclick="showView('stats',3)"><b>▥</b>Статистика</button><button onclick="showView('settings',4)"><b>•••</b>Ещё</button></nav>
@@ -1868,63 +1867,5 @@ document.addEventListener('gestureend',function(e){e.preventDefault()},{passive:
 <!-- ===== Adlook: конец общего кода ===== -->
 
 
-<script id="rv-device-stats-recovery">
-(function(){
- 'use strict';
- const BASE='https://pwhryvpmjwlfysprdndr.supabase.co';
- const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
- const ACCESS='rv_sb_access_token_v1',REFRESH='rv_sb_refresh_token_v1',EXP='rv_sb_expires_at_v1';
- const out=()=>document.getElementById('statsRecoveryOutput');
- async function auth(path,body){
-  const r=await fetch(BASE+'/auth/v1/'+path,{method:'POST',cache:'no-store',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw Error(data.msg||data.error_description||data.message||'Не удалось обновить вход');
-  return data;
- }
- function save(session){
-  localStorage.setItem(ACCESS,session.access_token);
-  if(session.refresh_token)localStorage.setItem(REFRESH,session.refresh_token);
-  localStorage.setItem(EXP,String(session.expires_at?session.expires_at*1000:Date.now()+session.expires_in*1000));
-  return session.access_token;
- }
- window.rvRequestStatsRecovery=async function(){
-  const el=out(),btn=document.getElementById('recoverStatsBtn');
-  if(!el||!btn)return;
-  btn.disabled=true;el.textContent='Проверяем установку…';
-  try{
-   const id=localStorage.getItem('rv_device_id_v1');
-   if(!id||localStorage.getItem('rv_access_allowed_v1')!=='1')throw Error('Эта установка ещё не зарегистрирована');
-   let token=localStorage.getItem(ACCESS);
-   if(!token||Number(localStorage.getItem(EXP)||0)<=Date.now()+60000){
-    const refresh=localStorage.getItem(REFRESH);
-    if(refresh){
-     try{token=save(await auth('token?grant_type=refresh_token',{refresh_token:refresh}));}
-     catch(e){
-      // This action is user-initiated; a replacement session is not trusted
-      // until an administrator verifies the displayed one-time code.
-      token=save(await auth('signup',{}));
-     }
-    }else{
-     token=save(await auth('signup',{}));
-    }
-   }
-   const r=await fetch(BASE+'/rest/v1/rpc/request_device_stats_recovery',{
-    method:'POST',cache:'no-store',headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
-    body:JSON.stringify({p_device_id:id})
-   });
-   const data=await r.json().catch(()=>null);
-   if(!r.ok)throw Error((data&&data.message)||'Ошибка запроса: '+r.status);
-   el.textContent='';
-   if(data==='already_owned'){
-    el.textContent='Привязка уже правильная. Проверьте статистику после следующей отправки.';
-   }else{
-    const heading=document.createElement('div');heading.textContent='Код подтверждения (15 минут):';el.appendChild(heading);
-    const code=document.createElement('strong');code.style.cssText='font-size:17px;letter-spacing:1px;overflow-wrap:anywhere';code.textContent=data;el.appendChild(code);
-    const help=document.createElement('div');help.textContent='Откройте админку, найдите это устройство и введите код в «Восстановить статистику». Затем вернитесь сюда и повторно откройте приложение.';el.appendChild(help);
-   }
-  }catch(e){el.textContent='Не удалось создать запрос: '+String(e.message||e);}
-  finally{btn.disabled=false;}
- };
-})();
-</script>
+
 </body></html>
