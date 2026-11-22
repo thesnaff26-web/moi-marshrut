@@ -1673,7 +1673,24 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortra
 
   // Когда интернет появляется, сразу проверяем Supabase.
   // Успешная проверка снова даёт полные 7 суток.
-  window.addEventListener('online',()=>verify());
+  // Refresh the admin summary silently when connectivity returns or the PWA resumes.
+  // Keep the 7-day offline access model and avoid repeated foreground requests.
+  let lastForegroundSync=0,foregroundBusy=false;
+  async function syncOnForeground(){
+    if(foregroundBusy||document.hidden||navigator.onLine===false)return;
+    const now=Date.now();
+    if(now-lastForegroundSync<60000)return;
+    lastForegroundSync=now;
+    foregroundBusy=true;
+    try{
+      // verify() already submits statistics and refreshes the access timestamp.
+      // Reuse it instead of requiring a manual recovery button.
+      await verify();
+    }finally{foregroundBusy=false;}
+  }
+  window.addEventListener('online',()=>{void syncOnForeground()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void syncOnForeground()});
+  window.addEventListener('pageshow',event=>{if(event.persisted)void syncOnForeground()});
 
   // При запуске сначала мгновенно открываем приложение,
   // если локальные 7 суток ещё действуют.
