@@ -831,7 +831,7 @@ if ('serviceWorker' in navigator && isStandaloneApp()) {
   });
   window.addEventListener('route-editor-closed', applyPendingUpdate);
 }
-const KEY='moiMarshrut';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3aHJ5dnBtandsZnlzcHJkbmRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMjIyMzEsImV4cCI6MjEwNTY5ODIzMX0.ANwWzcqcyzA7Tvd_H5n3fpVAruU_6PUP4d0o5m0Vzcc';
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
 if(!state||typeof state!=='object'){
