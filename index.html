@@ -1418,11 +1418,19 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)lockPortra
     if(refresh){
       try{return saveAuthSession(await authRequest('token?grant_type=refresh_token',{refresh_token:refresh}))}
       catch(e){
-        localStorage.removeItem(AUTH_ACCESS_KEY);localStorage.removeItem(AUTH_REFRESH_KEY);localStorage.removeItem(AUTH_EXPIRES_KEY);
+        // Preserve the installation's anonymous account on a failed refresh.
+        // Signing up again changes auth.uid() while devices.user_id still points
+        // to the original user, breaking owner-checked admin statistics.
+        // Keep the refresh token for a later retry and never silently rebind.
+        throw e;
       }
     }
 
-    // Supabase anonymous sign-in: creates a real auth.uid() for this browser/device.
+    // A registered installation must never be silently assigned a new owner.
+    // This requires an explicitly verified recovery flow, not a fresh signup.
+    if(localStorage.getItem(DEVICE_KEY)&&localStorage.getItem(ACCESS_KEY)==='1'){
+      throw new Error('Device session missing; owner recovery required');
+    }
     return saveAuthSession(await authRequest('signup',{}));
   }
 
